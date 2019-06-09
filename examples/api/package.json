@@ -1,0 +1,30 @@
+{
+  "name": "node-provide-examples-api",
+  "version": "1.0.0",
+  "description": "Server API example for node-provide package",
+  "main": ".dist/index.js",
+  "scripts": {
+    "start": "npx tsc && node .dist/index.js"
+  },
+  "author": "betula <mail@betula.co>",
+  "license": "ISC",
+  "dependencies": {
+    "node-provide": "latest",
+    "express": "^4.17.1",
+    "cors": "^2.8.5",
+    "nanoid": "^2.0.3",
+    "module-alias": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.0",
+    "@types/cors": "^2.8.5",
+    "@types/nanoid": "^2.0.0",
+    "@types/node": "^12.0.7",
+    "typescript": "^3.5.1",
+    "tslint": "^5.17.0",
+    "tslint-config-airbnb": "^5.11.1"
+  },
+  "_moduleAliases": {
+    "@services": ".dist/services"
+  }
+}

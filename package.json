@@ -1,7 +1,10 @@
 {
   "name": "node-provide",
   "version": "0.0.0",
-  "description": "Provide a simple dependency provider for node",
+  "description": "Provide a simple dependency injection for node",
+  "repository": {
+    "url": "https://github.com/betula/node-provide"
+  },
   "main": ".dist/index.js",
   "types": ".dist/index.d.ts",
   "scripts": {
@@ -12,7 +15,7 @@
     "dependency injection",
     "node"
   ],
-  "author": "betula<mail@betula.co>",
+  "author": "betula <mail@betula.co>",
   "license": "ISC",
   "devDependencies": {
     "typescript": "^3.5.1",
