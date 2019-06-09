@@ -10,7 +10,7 @@ export class AccountRouter {
 
   public init() {
     this.server.route("GET", "/account/token", this.createToken.bind(this));
-    this.logger.log(`Route ${this.server.getPublicUrl()}/account/token added`);
+    this.logger.log(`Route GET ${this.server.getPublicUrl()}/account/token added`);
   }
 
   public async createToken() {
