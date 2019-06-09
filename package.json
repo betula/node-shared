@@ -1,6 +1,6 @@
 {
   "name": "node-provide",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Provide a simple dependency injection for node",
   "repository": {
     "url": "https://github.com/betula/node-provide"
