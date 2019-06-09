@@ -1,6 +1,6 @@
 {
   "name": "node-provide",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Provide a simple dependency injection for node",
   "repository": {
     "url": "https://github.com/betula/node-provide"
@@ -17,6 +17,9 @@
   ],
   "author": "betula <mail@betula.co>",
   "license": "ISC",
+  "dependencies": {
+    "reflect-metadata": "^0.1.13"
+  },
   "devDependencies": {
     "typescript": "^3.5.1",
     "tslint": "^5.17.0",
