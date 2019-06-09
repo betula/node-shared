@@ -9,7 +9,9 @@
         true,
         "double"
       ],
-      "variable-name": false
+      "variable-name": false,
+      "no-parameter-reassignment": false,
+      "ter-arrow-parens": [true, "always"]
     },
     "rulesDirectory": []
 }
