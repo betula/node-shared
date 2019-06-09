@@ -1,7 +1,7 @@
 import "module-alias/register";
 import { provide } from "node-provide";
 import { App } from "./App";
-import { Logger } from "./services/Logger";
+import { Logger } from "@services/Logger";
 
 class AppRunner {
   @provide public app: App;

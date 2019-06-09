@@ -1,7 +1,8 @@
 {
-  "name": "node-provide-examples-api",
+  "name": "node-provide-examples-api-server",
   "version": "1.0.0",
   "description": "Server API example for node-provide package",
+  "private": true,
   "main": ".dist/index.js",
   "scripts": {
     "start": "npx tsc && node .dist/index.js"

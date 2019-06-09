@@ -1,16 +1,12 @@
 import "reflect-metadata";
 
-const store = new Map();
+const instances = new Map();
 
 export function provide(target: object, propertyKey: string): any {
   const Class = Reflect.getMetadata("design:type", target, propertyKey);
   return {
     get() {
-      let instance = store.get(Class);
-      if (!instance) {
-        store.set(Class, (instance = new Class()));
-      }
-
+      const instance = resolve(Class);
       Object.defineProperty(this, propertyKey, {
         value: instance,
         enumerable: true,
@@ -22,4 +18,16 @@ export function provide(target: object, propertyKey: string): any {
     enumerable: true,
     configurable: true,
   };
+}
+
+export function resolve<T>(Class: new (...args: any) => T): T {
+  let instance = instances.get(Class);
+  if (!instance) {
+    instances.set(Class, (instance = new Class()));
+  }
+  return instance;
+}
+
+export function reset() {
+  instances.clear();
 }

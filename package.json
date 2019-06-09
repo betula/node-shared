@@ -1,6 +1,6 @@
 {
   "name": "node-provide",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Provide a simple dependency injection for node",
   "repository": {
     "url": "https://github.com/betula/node-provide"
@@ -20,9 +20,6 @@
   "devDependencies": {
     "typescript": "^3.5.1",
     "tslint": "^5.17.0",
-    "tslint-config-airbnb": "^5.11.1",
-    "jest": "^24.8.0",
-    "@types/jest": "^24.0.13",
-    "ts-jest": "^24.0.2"
+    "tslint-config-airbnb": "^5.11.1"
   }
 }
