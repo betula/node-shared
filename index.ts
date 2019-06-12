@@ -2,8 +2,8 @@ import "reflect-metadata";
 
 type Type<T = any> = new (...args: any) => T;
 
-const instances = new Map();
-const redirects = new Map();
+export const instances = new Map();
+export const redirects = new Map();
 
 export function provide(target: object, propertyKey: string): any {
   const Class = Reflect.getMetadata("design:type", target, propertyKey);
@@ -24,8 +24,13 @@ export function provide(target: object, propertyKey: string): any {
 }
 
 export function resolve<T>(Class: Type<T>): T {
-  Class = redirects.get(Class) || Class;
-  let instance = instances.get(Class);
+  let instance;
+  const RedirectedClass = redirects.get(Class);
+  if (typeof RedirectedClass !== "undefined") {
+    instances.set(Class, instance = resolve<T>(RedirectedClass));
+    return instance;
+  }
+  instance = instances.get(Class);
   if (!instance) {
     instances.set(Class, (instance = new Class()));
   }
@@ -33,10 +38,10 @@ export function resolve<T>(Class: Type<T>): T {
 }
 
 export function redirect(from: Type, to: Type): void;
-export function redirect(...pairs: Type[][]): void;
+export function redirect(...fromToPairs: Type[][]): void;
 export function redirect(...args: any[]): void {
   if (Array.isArray(args[0])) {
-    (args as Type[][]).forEach((pair) => redirect(pair[0], pair[1]));
+    (args as Type[][]).forEach((pair) => redirects.set(pair[0], pair[1]));
   } else {
     redirects.set(args[0], args[1]);
   }

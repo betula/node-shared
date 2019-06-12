@@ -1,3 +1,4 @@
 examples
 .editorconfig
 tslint.json
+jest.config.js
