@@ -1,6 +1,6 @@
 {
   "name": "node-provide",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Provide a simple dependency injection for node",
   "repository": {
     "url": "https://github.com/betula/node-provide"
@@ -10,7 +10,7 @@
   "scripts": {
     "build": "npx tsc",
     "test": "npx jest",
-    "prepublish": "npm run test && npm run build"
+    "prepare": "npm run test && npm run build"
   },
   "keywords": [
     "di",
