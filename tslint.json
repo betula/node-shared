@@ -10,7 +10,8 @@
         "double"
       ],
       "variable-name": false,
-      "ter-arrow-parens": [true, "always"]
+      "ter-arrow-parens": [true, "always"],
+      "no-else-after-return": false
     },
     "rulesDirectory": [],
     "linterOptions": {

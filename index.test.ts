@@ -2,6 +2,14 @@ import { instances, redirects, provide, resolve, redirect, reset } from "./index
 
 afterEach(reset);
 
+test("Should work with JS semantic", () => {
+  class A {}
+  class B {
+    @provide(A) a: A;
+  }
+  expect(resolve(B).a).toBeInstanceOf(A);
+});
+
 test("Should be only one instance of provided class", () => {
   class A {
     value = "value";

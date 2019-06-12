@@ -1,12 +1,28 @@
 import "reflect-metadata";
 
 type Type<T = any> = new (...args: any) => T;
+type PropertyKey = string | symbol;
 
 export const instances = new Map();
 export const redirects = new Map();
 
-export function provide(target: object, propertyKey: string): any {
-  const Class = Reflect.getMetadata("design:type", target, propertyKey);
+export function provide(target: object, propertyKey: PropertyKey): any;
+export function provide(Class: Type): (target: object, propertyKey: PropertyKey) => any;
+export function provide(target: object | Type, propertyKey?: PropertyKey): any {
+  if (typeof target === "function") {
+    const Class = target;
+    return (target: object, propertyKey: PropertyKey): any => (
+      createProvideDescriptor(Class as Type, propertyKey)
+    );
+  } else {
+    return createProvideDescriptor(
+      Reflect.getMetadata("design:type", target, propertyKey!),
+      propertyKey!,
+    );
+  }
+}
+
+function createProvideDescriptor(Class: Type, propertyKey: PropertyKey) {
   return {
     get() {
       const instance = resolve(Class);

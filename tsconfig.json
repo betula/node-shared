@@ -62,6 +62,7 @@
   },
   "exclude": [
     "examples/*",
-    "**/*.js"
+    "**/*.js",
+    "**/*.test.ts"
   ]
 }
