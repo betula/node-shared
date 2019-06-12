@@ -2,3 +2,6 @@ examples
 .editorconfig
 tslint.json
 jest.config.js
+index.test.ts
+tsconfig.json
+index.ts
