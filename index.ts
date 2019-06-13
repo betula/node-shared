@@ -14,12 +14,11 @@ export function provide(target: object | Type, propertyKey?: PropertyKey): any {
     return (target: object, propertyKey: PropertyKey): any => (
       createProvideDescriptor(Class as Type, propertyKey)
     );
-  } else {
-    return createProvideDescriptor(
-      Reflect.getMetadata("design:type", target, propertyKey!),
-      propertyKey!,
-    );
   }
+  return createProvideDescriptor(
+    Reflect.getMetadata("design:type", target, propertyKey!),
+    propertyKey!,
+  );
 }
 
 function createProvideDescriptor(Class: Type, propertyKey: PropertyKey) {

@@ -4,7 +4,7 @@ export class Logger {
   private formatter(values: any): string {
     return values.map((value: any) => (
       (typeof value === "object" && value !== null)
-        ? `${JSON.stringify(value)}\n`
+        ? JSON.stringify(value)
         : `${value}`
     )).join(" ");
   }

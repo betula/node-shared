@@ -1,0 +1,27 @@
+{
+  "name": "modules",
+  "version": "1.0.0",
+  "description": "Modules example for node-provide package",
+  "private": true,
+  "scripts": {
+    "start": "npx tsc && node .dist/index.js",
+    "test": "npx jest",
+    "tslint": "tslint -c tslint.json -p tsconfig.json"
+  },
+  "author": "betula <mail@betula.co>",
+  "license": "ISC",
+  "dependencies": {
+    "node-provide": "latest",
+    "chalk": "^2.4.2",
+    "module-alias": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^12.0.7",
+    "typescript": "^3.5.1",
+    "tslint": "^5.17.0",
+    "tslint-config-airbnb": "^5.11.1"
+  },
+  "_moduleAliases": {
+    "@modules": ".dist"
+  }
+}

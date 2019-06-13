@@ -11,9 +11,5 @@ module.exports = {
     "**/*.test.ts"
   ],
   testEnvironment: "node",
-  testPathIgnorePatterns: [
-    "/node_modules/",
-    "/examples/"
-  ],
   verbose: true
 };

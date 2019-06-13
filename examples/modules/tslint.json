@@ -8,9 +8,7 @@
     "quotemark": [
       true,
       "double"
-    ],
-    "variable-name": false,
-    "ter-arrow-parens": [true, "always"]
+    ]
   },
   "rulesDirectory": [],
   "linterOptions": {

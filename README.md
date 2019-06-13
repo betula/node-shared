@@ -1,4 +1,4 @@
-node-provide is more than simple decorator for lightweight dependency injection. Is a powerful instrument for organizing the architecture of your application.
+node-provide is more than simple decorator for control your dependencies. It's a powerful instrument for organizing the architecture of your application.
 
 The better experience you will get if you use node-provide with TypeScript because in this case, you can get an instance of your dependency with 9 character instruction.
 
@@ -30,6 +30,6 @@ class App {
 const app = new App();
 ```
 
-You can see a graceful example of server for RESTfull API in examples folder inside this repository ([link](https://github.com/betula/node-provide/tree/master/examples/api-server)).
+You can see a graceful example of server for RESTfull API in examples folder inside this ([repository](https://github.com/betula/node-provide/tree/master/examples/server-with-jest)).
 
 If you have questions or something else for me or this project. Maybe architectures questions, improvement ideas or anything else. Please make issues. I want to continue to develop this project and each of your opinions and thoughts will be grateful.

@@ -1,7 +1,7 @@
 {
   "name": "node-provide",
   "version": "0.1.6",
-  "description": "Provide a simple dependency injection for node",
+  "description": "Simple dependency provider for node",
   "repository": {
     "url": "https://github.com/betula/node-provide"
   },
@@ -10,11 +10,15 @@
   "scripts": {
     "build": "npx tsc",
     "test": "npx jest",
-    "prepare": "npm run test && npm run build"
+    "tslint": "tslint -c tslint.json -p tsconfig.json",
+    "prepare": "npm run tslint && npm run test && npm run build"
   },
   "keywords": [
     "di",
     "dependency injection",
+    "dependency provider",
+    "provide",
+    "injection",
     "node"
   ],
   "author": "betula <mail@betula.co>",
