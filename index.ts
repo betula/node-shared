@@ -1,10 +1,45 @@
+import async_hooks, { AsyncHook } from "async_hooks";
 import "reflect-metadata";
 
 type Type<T = any> = new (...args: any) => T;
 type PropertyKey = string | symbol;
 
+interface MapOfAsyncId {
+  [key: number]: number;
+}
+
 export const instances = new Map();
 export const overrides = new Map();
+export const RootZoneId = 0;
+
+const mapOfAsyncId: MapOfAsyncId = {};
+let hook: AsyncHook;
+let zoneId = RootZoneId;
+
+export function getZoneId(): number {
+  return zoneId;
+}
+
+export function isolate<T = any>(callback: () => T): Promise<T> {
+  if (typeof hook === "undefined") {
+    hook = async_hooks.createHook({
+      init(asyncId: number, type: any, triggerAsyncId: number) {
+        const rootAsyncId = mapOfAsyncId[triggerAsyncId];
+        rootAsyncId && (mapOfAsyncId[asyncId] = rootAsyncId);
+      },
+      before(asyncId: number) {
+        zoneId = mapOfAsyncId[asyncId] || RootZoneId;
+      },
+    }).enable();
+  }
+  return new Promise((resolve) => {
+    process.nextTick(() => {
+      const asyncId = async_hooks.executionAsyncId();
+      mapOfAsyncId[asyncId] = asyncId;
+      resolve(callback());
+    });
+  });
+}
 
 export function provide(target: object, propertyKey: PropertyKey): any;
 export function provide(Class: Type): (target: object, propertyKey: PropertyKey) => any;
@@ -66,3 +101,7 @@ export function reset() {
   instances.clear();
   overrides.clear();
 }
+
+export function container() { }
+export function attach() { }
+export function bind() { }
