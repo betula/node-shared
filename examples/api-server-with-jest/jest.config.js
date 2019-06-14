@@ -4,7 +4,7 @@ module.exports = {
       tsConfig: "tsconfig.json"
     }
   },
-  setupFilesAfterEnv: [ "<rootDir>/jest.setupAfterEnv.js" ],
+  setupFilesAfterEnv: [ "node-provide/jest-cleanup-after-each" ],
   transform: {
     "^.+\\.ts$": "ts-jest"
   },

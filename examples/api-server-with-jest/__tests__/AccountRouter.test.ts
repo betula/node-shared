@@ -1,7 +1,8 @@
-import { AccountRouter } from "./AccountRouter";
+import { instances } from "node-provide";
+import { AccountRouter } from "../AccountRouter";
 
 jest.mock("@services/Server");
-jest.mock("./AccountApi");
+jest.mock("../AccountApi");
 
 let router: AccountRouter;
 beforeEach(() => {

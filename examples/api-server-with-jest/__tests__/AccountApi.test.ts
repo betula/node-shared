@@ -1,4 +1,4 @@
-import { AccountApi } from "./AccountApi";
+import { AccountApi } from "../AccountApi";
 const nanoid = require("nanoid");
 jest.mock("nanoid");
 jest.mock("@services/Db");

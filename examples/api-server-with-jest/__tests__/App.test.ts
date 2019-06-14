@@ -1,8 +1,8 @@
-import { App } from "./App";
+import { App } from "../App";
 
 jest.mock("@services/Db");
 jest.mock("@services/Server");
-jest.mock("./AccountRouter");
+jest.mock("../AccountRouter");
 
 it("Should work", async () => {
   const app = new App();
