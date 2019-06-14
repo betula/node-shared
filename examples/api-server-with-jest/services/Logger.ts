@@ -2,11 +2,12 @@
 export class Logger {
 
   private formatter(values: any): string {
-    return values.map((value: any) => (
-      (typeof value === "object" && value !== null)
-        ? JSON.stringify(value)
-        : `${value}`
-    )).join(" ");
+    return values.map((value: any) => {
+      if (typeof value === "object" && value !== null) {
+        return JSON.stringify(value);
+      }
+      return value;
+    }).join(" ");
   }
 
   public log(...values: any[]) {

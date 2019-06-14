@@ -4,7 +4,7 @@ type Type<T = any> = new (...args: any) => T;
 type PropertyKey = string | symbol;
 
 export const instances = new Map();
-export const redirects = new Map();
+export const overrides = new Map();
 
 export function provide(target: object, propertyKey: PropertyKey): any;
 export function provide(Class: Type): (target: object, propertyKey: PropertyKey) => any;
@@ -40,7 +40,7 @@ function createProvideDescriptor(Class: Type, propertyKey: PropertyKey) {
 
 export function resolve<T>(Class: Type<T>): T {
   let instance;
-  const RedirectedClass = redirects.get(Class);
+  const RedirectedClass = overrides.get(Class);
   if (typeof RedirectedClass !== "undefined") {
     instances.set(Class, instance = resolve<T>(RedirectedClass));
     return instance;
@@ -52,17 +52,17 @@ export function resolve<T>(Class: Type<T>): T {
   return instance;
 }
 
-export function redirect(from: Type, to: Type): void;
-export function redirect(...fromToPairs: Type[][]): void;
-export function redirect(...args: any[]): void {
+export function override(from: Type, to: Type): void;
+export function override(...fromToPairs: Type[][]): void;
+export function override(...args: any[]): void {
   if (Array.isArray(args[0])) {
-    (args as Type[][]).forEach((pair) => redirects.set(pair[0], pair[1]));
+    (args as Type[][]).forEach((pair) => overrides.set(pair[0], pair[1]));
   } else {
-    redirects.set(args[0], args[1]);
+    overrides.set(args[0], args[1]);
   }
 }
 
 export function reset() {
   instances.clear();
-  redirects.clear();
+  overrides.clear();
 }

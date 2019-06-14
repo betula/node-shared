@@ -1,12 +1,12 @@
 import { default as Express } from "express";
 import { default as Cors } from "cors";
 import { provide } from "node-provide";
-import { Logger } from "./Logger";
+import { Logger } from "@services/Logger";
 
 export type RequestHandler = (req: Express.Request, res: Express.Response) => Promise<any>;
 
 export class Server {
-  @provide public logger: Logger;
+  @provide logger: Logger;
 
   public express: Express.Express;
   public port: number;
@@ -27,10 +27,6 @@ export class Server {
     this.logger.log("Server is ready");
   }
 
-  public getPublicUrl() {
-    return `http://${this.hostname}:${this.port}`;
-  }
-
   public route(method: string, pattern: string, handler: RequestHandler) {
     (this.express as any)[method.toLowerCase()](
       pattern,
@@ -47,5 +43,6 @@ export class Server {
         }
       },
     );
+    this.logger.log(`Route ${method} http://${this.hostname}:${this.port}${pattern} added`);
   }
 }

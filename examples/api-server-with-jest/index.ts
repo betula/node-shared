@@ -4,8 +4,8 @@ import { App } from "./App";
 import { Logger } from "@services/Logger";
 
 class AppRunner {
-  @provide public app: App;
-  @provide public logger: Logger;
+  @provide app: App;
+  @provide logger: Logger;
 
   public start() {
     this.app.start({

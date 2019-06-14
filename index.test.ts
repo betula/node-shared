@@ -1,14 +1,6 @@
-import { instances, redirects, provide, resolve, redirect, reset } from "./index";
+import { instances, overrides, provide, resolve, override, reset } from "./index";
 
 afterEach(reset);
-
-test("Should work with JS semantic", () => {
-  class A {}
-  class B {
-    @provide(A) a: A;
-  }
-  expect(resolve(B).a).toBeInstanceOf(A);
-});
 
 test("Should be only one instance of provided class", () => {
   class A {
@@ -62,26 +54,26 @@ test("Should work through resolve function", () => {
   expect(resolve(A)).toBe(b.a);
 });
 
-test("Should work with redirect", () => {
+test("Should work with override", () => {
   class A {}
   class A2 extends A {}
   class B {
     @provide a: A;
   }
-  redirect(A, A2);
-  expect(redirects.size).toBe(1);
+  override(A, A2);
+  expect(overrides.size).toBe(1);
   expect(resolve(B).a).toBeInstanceOf(A2);
 });
 
-test("Should cache redirects", () => {
+test("Should cache override", () => {
   class A {}
   class A2 extends A {}
   class A3 extends A2 {}
   class B {
     @provide a: A;
   }
-  redirect([A, A2], [A2, A3]);
-  expect(redirects.size).toBe(2);
+  override([A, A2], [A2, A3]);
+  expect(overrides.size).toBe(2);
   expect(resolve(B).a).toBeInstanceOf(A3);
   expect(instances.get(A)).toBeInstanceOf(A3);
   expect(instances.get(A2)).toBeInstanceOf(A3);
@@ -90,11 +82,19 @@ test("Should cache redirects", () => {
 test("Should work reset", () => {
   class A {}
   class A2 extends A {}
-  redirect(A, A2);
+  override(A, A2);
   expect(resolve(A)).toBe(resolve(A2));
   expect(instances.size).toBe(2);
-  expect(redirects.size).toBe(1);
+  expect(overrides.size).toBe(1);
   reset();
   expect(instances.size).toBe(0);
-  expect(redirects.size).toBe(0);
+  expect(overrides.size).toBe(0);
+});
+
+test("Should work with JS semantic", () => {
+  class A {}
+  class B {
+    @provide(A) a: A;
+  }
+  expect(resolve(B).a).toBeInstanceOf(A);
 });

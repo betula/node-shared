@@ -4,9 +4,9 @@ import { Server } from "@services/Server";
 import { AccountRouter } from "./AccountRouter";
 
 export class App {
-  @provide public db: Db;
-  @provide public server: Server;
-  @provide public accountRouter: AccountRouter;
+  @provide db: Db;
+  @provide server: Server;
+  @provide accountRouter: AccountRouter;
 
   public async start(config: any) {
     this.configure(config);

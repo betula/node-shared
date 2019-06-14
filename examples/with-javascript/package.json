@@ -1,7 +1,7 @@
 {
   "name": "with-javascript",
   "version": "1.0.0",
-  "description": "Example for node-provide on javascript",
+  "description": "Example with javascript",
   "private": true,
   "scripts": {
     "start": "npx babel *.js -d .dist >/dev/null && node .dist/index.js"

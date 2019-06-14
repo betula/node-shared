@@ -1,10 +1,10 @@
 import { provide } from "node-provide";
-import { Logger } from "./Logger";
+import { Logger } from "@services/Logger";
 
 export class Db {
   @provide logger: Logger;
 
-  public configure({ url }: any) {
+  configure({ url }: any) {
     this.logger.log("Configure Db service with url", url);
   }
 

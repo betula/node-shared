@@ -3,7 +3,7 @@ import { provide } from "node-provide";
 import { Db } from "@services/Db";
 
 export class AccountApi {
-  @provide public db: Db;
+  @provide db: Db;
 
   public async createToken() {
     const token = nanoid();

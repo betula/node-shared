@@ -1,10 +1,10 @@
 {
-  "name": "server-with-jest",
+  "name": "api-server-with-jest",
   "version": "1.0.0",
-  "description": "Server example for node-provide package",
+  "description": "Example of simple API server with jest tests",
   "private": true,
   "scripts": {
-    "start": "npx tsc && node .dist/index.js",
+    "start": "npx tsc -p tsconfig.exclude-tests.json && node .dist/index.js",
     "test": "npx jest",
     "tslint": "tslint -c tslint.json -p tsconfig.json"
   },

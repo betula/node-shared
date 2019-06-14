@@ -30,6 +30,6 @@ class App {
 const app = new App();
 ```
 
-You can see a graceful example of server for RESTfull API in examples folder inside this ([repository](https://github.com/betula/node-provide/tree/master/examples/server-with-jest)).
+You can see a graceful example of server for RESTful API in examples folder inside this ([repository](https://github.com/betula/node-provide/tree/master/examples/api-server-with-jest)).
 
 If you have questions or something else for me or this project. Maybe architectures questions, improvement ideas or anything else. Please make issues. I want to continue to develop this project and each of your opinions and thoughts will be grateful.

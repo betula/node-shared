@@ -1,7 +1,7 @@
 {
   "name": "modules",
   "version": "1.0.0",
-  "description": "Modules example for node-provide package",
+  "description": "Example with modules architecture",
   "private": true,
   "scripts": {
     "start": "npx tsc && node .dist/index.js",
