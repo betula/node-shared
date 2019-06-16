@@ -1,4 +1,4 @@
-import { instances, overrides, provide, resolve, override, reset } from "./index";
+import { instances, overrides, provide, resolve, override, reset, RootZoneId } from "./index";
 
 afterEach(reset);
 
@@ -16,7 +16,7 @@ test("Should be only one instance of provided class", () => {
   const c = new C();
   expect(b.a.value).toBe("value");
   expect(c.a).toBe(b.a);
-  expect(instances.size).toBe(1);
+  expect(instances[RootZoneId].size).toBe(1);
 });
 
 test("Should make instance of class only on demand", () => {
@@ -27,9 +27,9 @@ test("Should make instance of class only on demand", () => {
     @provide a: A;
   }
   const b = new B();
-  expect(instances.size).toBe(0);
+  expect(instances[RootZoneId].size).toBe(0);
   expect(typeof b.a.method).toBe("function");
-  expect(instances.size).toBe(1);
+  expect(instances[RootZoneId].size).toBe(1);
 });
 
 test("Should cache getter after first use", () => {
@@ -39,19 +39,24 @@ test("Should cache getter after first use", () => {
   }
   const b = new B();
   const a = b.a;
-  instances.clear();
-  expect(instances.size).toBe(0);
+  instances[RootZoneId].clear();
+  expect(instances[RootZoneId].size).toBe(0);
   expect(b.a).toBe(a);
-  expect(instances.size).toBe(0);
+  expect(instances[RootZoneId].size).toBe(0);
 });
 
-test("Should work through resolve function", () => {
+test("Should work resolve function", () => {
   class A {}
-  class B {
+  class B {}
+  class C {
     @provide a: A;
+    @provide b: B;
   }
-  const b = new B();
-  expect(resolve(A)).toBe(b.a);
+  const c = new C();
+  expect(resolve(A)).toBe(c.a);
+  const [a, b] = resolve(A, B);
+  expect(a).toBe(c.a);
+  expect(b).toBe(c.b);
 });
 
 test("Should work with override", () => {
@@ -61,7 +66,7 @@ test("Should work with override", () => {
     @provide a: A;
   }
   override(A, A2);
-  expect(overrides.size).toBe(1);
+  expect(overrides[RootZoneId].size).toBe(1);
   expect(resolve(B).a).toBeInstanceOf(A2);
 });
 
@@ -73,10 +78,10 @@ test("Should cache override", () => {
     @provide a: A;
   }
   override([A, A2], [A2, A3]);
-  expect(overrides.size).toBe(2);
+  expect(overrides[RootZoneId].size).toBe(2);
   expect(resolve(B).a).toBeInstanceOf(A3);
-  expect(instances.get(A)).toBeInstanceOf(A3);
-  expect(instances.get(A2)).toBeInstanceOf(A3);
+  expect(instances[RootZoneId].get(A)).toBeInstanceOf(A3);
+  expect(instances[RootZoneId].get(A2)).toBeInstanceOf(A3);
 });
 
 test("Should work reset", () => {
@@ -84,11 +89,11 @@ test("Should work reset", () => {
   class A2 extends A {}
   override(A, A2);
   expect(resolve(A)).toBe(resolve(A2));
-  expect(instances.size).toBe(2);
-  expect(overrides.size).toBe(1);
+  expect(instances[RootZoneId].size).toBe(2);
+  expect(overrides[RootZoneId].size).toBe(1);
   reset();
-  expect(instances.size).toBe(0);
-  expect(overrides.size).toBe(0);
+  expect(instances[RootZoneId].size).toBe(0);
+  expect(overrides[RootZoneId].size).toBe(0);
 });
 
 test("Should work with JS semantic", () => {
