@@ -59,8 +59,7 @@ export function isolate<T = any>(callback: () => T): Promise<T> {
   });
 }
 
-export function provide<T>(options: ClassTypifyObjectMap<T>): <K, M extends any[]>(Class: ClassType<K, M>) => ClassType<K & T, M>;
-export function provide<T extends Container>(options: T): <K, M extends any[]>(Class: ClassType<K, M>) => ClassType<K & T, M>;
+export function provide<T extends ObjectMap, K extends Container>(...setOfOptions: [ClassTypifyObjectMap<T> | K, ...ObjectMap[]]): <P, M extends any[]>(Class: ClassType<P, M>) => ClassType<P & T & K, M>;
 export function provide(target: object, propertyKey: PropertyKey): any;
 export function provide(Class: ClassType): (target: object, propertyKey: PropertyKey) => any;
 export function provide(targetOrClassOrOptions: any, propertyKey?: any): any {
@@ -70,9 +69,9 @@ export function provide(targetOrClassOrOptions: any, propertyKey?: any): any {
       createProvideDescriptor(Class as ClassType, propertyKey)
     );
   }
-  if (typeof propertyKey === "undefined") {
+  if (typeof propertyKey === "undefined" || typeof propertyKey === "object") {
     return (Class: any) => {
-      attach(Class.prototype, targetOrClassOrOptions);
+      (attach as any)(Class.prototype, ...Array.prototype.slice.call(arguments));
       return Class;
     };
   }
@@ -88,7 +87,7 @@ export function resolve<T0, T1, T2>(...Classes: [ClassType<T0>, ClassType<T1>, C
 export function resolve<T0, T1, T2, T3>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>, ClassType<T3>]): [T0, T1, T2, T3];
 export function resolve<T0, T1, T2, T3, T4>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>, ClassType<T3>, ClassType<T4>]): [T0, T1, T2, T3, T4];
 export function resolve<T0, T1, T2, T3, T4, T5>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>, ClassType<T3>, ClassType<T4>, ClassType<T5>]): [T0, T1, T2, T3, T4, T5];
-export function resolve(...Classes: any[]): any {
+export function resolve(...Classes: any[]) {
   if (Classes.length > 1) {
     return Classes.map((Class) => resolve(Class));
   }
@@ -113,7 +112,7 @@ type OverridePairs<T = any> = OverridePair<T>[];
 
 export function override(from: ClassType, to: ClassType): void;
 export function override(...fromToPairs: OverridePairs): void;
-export function override(...fromOrFromToPairs: any[]): void {
+export function override(...fromOrFromToPairs: any[]) {
   if (Array.isArray(fromOrFromToPairs[0])) {
     (fromOrFromToPairs as OverridePairs).forEach((pair) => setOverride(...pair));
   } else {
@@ -136,47 +135,57 @@ export function reset() {
   });
 }
 
-export function container<T>(options: ClassTypifyObjectMap<T>): T & Container {
+export function container<T extends ObjectMap, K extends Container>(...setOfOptions: [ClassTypifyObjectMap<T> | K, ...ObjectMap[]]): T & K & Container;
+export function container(...setOfOptions: [any, ...any[]]) {
   const propDescriptors: any = {};
-  Object.keys(options).forEach((key) => {
-    propDescriptors[key] = {
-      get: () => resolve((options as any)[key]),
-      enumerable: true,
-      configurable: true,
-    };
+  setOfOptions.forEach((options: any) => {
+    const isContainer = options instanceof Container;
+    Object.keys(options).forEach((key) => {
+      propDescriptors[key] = {
+        get: isContainer
+          ? Object.getOwnPropertyDescriptor(options, key)!.get
+          : () => resolve((options as any)[key]),
+        enumerable: true,
+        configurable: true,
+      };
+    });
   });
   const cont = new Container();
   Object.defineProperties(cont, propDescriptors);
-  return cont as (T & Container);
+  return cont;
 }
 
-export function attach<Y extends object, T>(target: Y, options: ClassTypifyObjectMap<T>): Y & T;
-export function attach<Y extends object, T extends Container>(target: Y, options: T): Y & T;
-export function attach(target: any, options: any): any {
-  const cont = (options instanceof Container)
-    ? options
-    : container(options);
+export function attach<Y extends object, T extends ObjectMap, K extends Container>(target: Y, ...setOfOptions: [ClassTypifyObjectMap<T> | K, ...ObjectMap[]]): Y & T & K;
+export function attach(target: any, ...setOfOptions: [any, ...any[]]) {
+  const cont = container(...setOfOptions);
   const containerDescriptors = Object.getOwnPropertyDescriptors(cont);
   Object.keys(containerDescriptors).forEach((key) => {
-    const descriptor = containerDescriptors[key];
-    if (typeof descriptor.get !== "undefined") {
-      Object.defineProperty(target, key, {
-        get() {
-          const instance = descriptor.get!();
-          Object.defineProperty(this, key, {
-            value: instance,
-            enumerable: true,
-            configurable: false,
-            writable: false,
-          });
-          return instance;
-        },
-        enumerable: true,
-        configurable: true,
-      });
-    }
+    Object.defineProperty(target, key, {
+      get() {
+        const instance = containerDescriptors[key].get!();
+        Object.defineProperty(this, key, {
+          value: instance,
+          enumerable: true,
+          configurable: false,
+          writable: false,
+        });
+        return instance;
+      },
+      enumerable: true,
+      configurable: true,
+    });
   });
   return target;
+}
+
+export function bind<T extends ObjectMap, K extends Container>(...setOfOptions: [ClassTypifyObjectMap<T> | K, ...ObjectMap[]]): <M extends any[], P extends any>(func: (cont: Container & T & K, ...args: M) => P) => ((...args: M) => P);
+export function bind(...setOfOptions: [any, ...any[]]) {
+  const cont = container(...setOfOptions);
+  return (func: any) => {
+    return function (this: any, ...args: any[]): any {
+      return func.call(this, cont, ...args);
+    };
+  };
 }
 
 type AssignPair<T = any> = [ClassType<T>, T];
@@ -195,19 +204,6 @@ export function assign(...ClassOrClassInstPairs: any[]) {
       assign(OverrideClass, instance);
     }
   }
-}
-
-export function bind<T>(options: ClassTypifyObjectMap<T>): <M extends any[], K extends any>(func: (cont: T & Container, ...args: M) => K) => ((...args: M) => K);
-export function bind<T extends Container>(options: T): <M extends any[], K extends any>(func: (cont: T, ...args: M) => K) => ((...args: M) => K);
-export function bind(options: any): any {
-  const cont = (options instanceof Container)
-    ? options
-    : container(options);
-  return (func: any) => {
-    return function (this: any, ...args: any[]): any {
-      return func.call(this, cont, ...args);
-    };
-  };
 }
 
 function createProvideDescriptor(Class: ClassType, propertyKey: PropertyKey) {

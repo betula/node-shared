@@ -1,4 +1,14 @@
-import { instances, overrides, provide, resolve, override, reset, RootZoneId } from "./index";
+import {
+  instances,
+  overrides,
+  provide,
+  resolve,
+  override,
+  container,
+  attach,
+  reset,
+  RootZoneId,
+} from "./index";
 
 afterEach(reset);
 
@@ -102,4 +112,36 @@ test("Should work with JS semantic", () => {
     @provide(A) a: A;
   }
   expect(resolve(B).a).toBeInstanceOf(A);
+});
+
+test("Should work container function", () => {
+  class A {}
+  class B {}
+  class C {}
+  const m = container({ a: A }, container({ b: B }), { c: C });
+  expect(m.a).toBeInstanceOf(A);
+  expect(m.b).toBeInstanceOf(B);
+  expect(m.c).toBeInstanceOf(C);
+});
+
+test("Should work attach function", () => {
+  class A {}
+  class B {}
+  class C {}
+  const p = {};
+  const m = attach(p, { a: A, b: B }, container({ c: C }));
+  expect(m).toBe(p);
+  expect(m.a).toBeInstanceOf(A);
+  expect(m.b).toBeInstanceOf(B);
+  expect(m.c).toBeInstanceOf(C);
+});
+
+test("Should cache getters in attach", () => {
+  class A {}
+  const m = attach({}, { a: A });
+  const a = m.a;
+  instances[RootZoneId].clear();
+  expect(instances[RootZoneId].size).toBe(0);
+  expect(m.a).toBe(a);
+  expect(instances[RootZoneId].size).toBe(0);
 });
