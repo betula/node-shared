@@ -1,22 +1,23 @@
 import async_hooks, { AsyncHook } from "async_hooks";
 import "reflect-metadata";
 
-type Type<T = any> = new (...args: any) => T;
-type TypifyObjectMap<T> = {
-  [P in keyof T]: Type<T[P]>;
+type ClassType<T = any, K extends any[] = any[]> = new (...args: K) => T;
+type ClassTypifyObjectMap<T> = {
+  [P in keyof T]: ClassType<T[P]>;
 };
 type PropertyKey = string | symbol;
 type ObjectMap<T = any> = {
   [key: string]: T;
 };
-type ObjectMapType<T = any> = ObjectMap<Type<T>>;
 class Container {
-  [key: string]: any;
+  readonly [key: string]: {
+    get(): object;
+  };
 }
 export const RootZoneId = 0;
 
-export const instances: ObjectMap<Map<Type, any>> = {};
-export const overrides: ObjectMap<Map<Type, any>> = {};
+export const instances: ObjectMap<Map<ClassType, any>> = {};
+export const overrides: ObjectMap<Map<ClassType, any>> = {};
 
 let zoneId = RootZoneId;
 
@@ -53,26 +54,34 @@ export function isolate<T = any>(callback: () => T): Promise<T> {
   });
 }
 
+export function provide<T>(options: ClassTypifyObjectMap<T>): <K, M extends any[]>(Class: ClassType<K, M>) => ClassType<K & T, M>;
+export function provide<T extends Container>(options: T): <K, M extends any[]>(Class: ClassType<K, M>) => ClassType<K & T, M>;
 export function provide(target: object, propertyKey: PropertyKey): any;
-export function provide(Class: Type): (target: object, propertyKey: PropertyKey) => any;
-export function provide(target: any, propertyKey?: PropertyKey): any {
-  if (typeof target === "function") {
-    const Class = target;
+export function provide(Class: ClassType): (target: object, propertyKey: PropertyKey) => any;
+export function provide(targetOrClassOrOptions: any, propertyKey?: any): any {
+  if (typeof targetOrClassOrOptions === "function") {
+    const Class = targetOrClassOrOptions;
     return (target: object, propertyKey: PropertyKey): any => (
-      createProvideDescriptor(Class as Type, propertyKey)
+      createProvideDescriptor(Class as ClassType, propertyKey)
     );
   }
+  if (typeof propertyKey === "undefined") {
+    return (Class: any) => {
+      attach(Class.prototype, targetOrClassOrOptions);
+      return Class;
+    };
+  }
   return createProvideDescriptor(
-    Reflect.getMetadata("design:type", target, propertyKey!),
+    Reflect.getMetadata("design:type", targetOrClassOrOptions, propertyKey!),
     propertyKey!,
   );
 }
 
-export function resolve<T>(Class: Type<T>): T;
-export function resolve<T0, T1>(...Classes: [Type<T0>, Type<T1>]): [T0, T1];
-export function resolve<T0, T1, T2>(...Classes: [Type<T0>, Type<T1>, Type<T2>]): [T0, T1, T2];
-export function resolve<T0, T1, T2, T4>(...Classes: [Type<T0>, Type<T1>, Type<T2>, Type<T4>]): [T0, T1, T2, T4];
-export function resolve<T0, T1, T2, T4, T5>(...Classes: [Type<T0>, Type<T1>, Type<T2>, Type<T4>, Type<T5>]): [T0, T1, T2, T4, T5];
+export function resolve<T>(Class: ClassType<T>): T;
+export function resolve<T0, T1>(...Classes: [ClassType<T0>, ClassType<T1>]): [T0, T1];
+export function resolve<T0, T1, T2>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>]): [T0, T1, T2];
+export function resolve<T0, T1, T2, T4>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>, ClassType<T4>]): [T0, T1, T2, T4];
+export function resolve<T0, T1, T2, T4, T5>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>, ClassType<T4>, ClassType<T5>]): [T0, T1, T2, T4, T5];
 export function resolve(...Classes: any[]): any {
   if (Classes.length > 1) {
     return Classes.map((Class) => resolve(Class));
@@ -91,29 +100,31 @@ export function resolve(...Classes: any[]): any {
   return instance;
 }
 
-type OverridePair<T = any> = [Type<T>, Type<T>];
+type OverridePair<T = any> = [ClassType<T>, ClassType<T>];
 type OverridePairs<T = any> = OverridePair<T>[];
 
-export function override(from: Type, to: Type): void;
+export function override(from: ClassType, to: ClassType): void;
 export function override(...fromToPairs: OverridePairs): void;
-export function override(...args: any[]): void {
-  if (Array.isArray(args[0])) {
-    (args as OverridePairs).forEach((pair) => setOverride(...pair));
+export function override(...fromOrFromToPairs: any[]): void {
+  if (Array.isArray(fromOrFromToPairs[0])) {
+    (fromOrFromToPairs as OverridePairs).forEach((pair) => setOverride(...pair));
   } else {
-    setOverride(...args as OverridePair);
+    setOverride(...fromOrFromToPairs as OverridePair);
   }
 }
 
 export function reset() {
   Object.keys(instances).forEach((id) => {
     instances[id].clear();
+    delete instances[id];
   });
   Object.keys(overrides).forEach((id) => {
     overrides[id].clear();
+    delete overrides[id];
   });
 }
 
-export function container<T>(options: TypifyObjectMap<T>): T & Container {
+export function container<T>(options: ClassTypifyObjectMap<T>): T & Container {
   const propDescriptors: any = {};
   Object.keys(options).forEach((key) => {
     propDescriptors[key] = {
@@ -127,7 +138,9 @@ export function container<T>(options: TypifyObjectMap<T>): T & Container {
   return cont as (T & Container);
 }
 
-export function attach(target: object, options: ObjectMapType | Container): void {
+export function attach<Y extends object, T>(target: Y, options: ClassTypifyObjectMap<T>): Y & T;
+export function attach<Y extends object, T extends Container>(target: Y, options: T): Y & T;
+export function attach(target: any, options: any): any {
   const cont = (options instanceof Container)
     ? options
     : container(options);
@@ -151,18 +164,19 @@ export function attach(target: object, options: ObjectMapType | Container): void
       });
     }
   });
+  return target;
 }
 
-type AssignPair<T = any> = [Type<T>, T];
+type AssignPair<T = any> = [ClassType<T>, T];
 type AssignPairs<T = any> = AssignPair<T>[];
 
-export function assign(Class: Type, instance: any): void;
+export function assign(Class: ClassType, instance: any): void;
 export function assign(...ClassInstPairs: AssignPairs): void;
-export function assign(...args: any[]) {
-  if (Array.isArray(args[0])) {
-    (args as AssignPairs).forEach((pair) => assign(...pair));
+export function assign(...ClassOrClassInstPairs: any[]) {
+  if (Array.isArray(ClassOrClassInstPairs[0])) {
+    (ClassOrClassInstPairs as AssignPairs).forEach((pair) => assign(...pair));
   } else {
-    const [Class, instance] = args;
+    const [Class, instance] = ClassOrClassInstPairs;
     setInstance(Class, instance);
     const OverrideClass = getOverride(Class);
     if (typeof OverrideClass !== "undefined") {
@@ -171,9 +185,9 @@ export function assign(...args: any[]) {
   }
 }
 
-export function bind<T>(options: TypifyObjectMap<T>): (func: (cont: T & Container, ...args: any[]) => any) => ((...args: any[]) => any);
-export function bind<T extends Container>(options: T): (func: (cont: T, ...args: any[]) => any) => ((...args: any[]) => any);
-export function bind<T>(options: any): any {
+export function bind<T>(options: ClassTypifyObjectMap<T>): <M extends any[], K extends any>(func: (cont: T & Container, ...args: M) => K) => ((...args: M) => K);
+export function bind<T extends Container>(options: T): <M extends any[], K extends any>(func: (cont: T, ...args: M) => K) => ((...args: M) => K);
+export function bind(options: any): any {
   const cont = (options instanceof Container)
     ? options
     : container(options);
@@ -184,7 +198,7 @@ export function bind<T>(options: any): any {
   };
 }
 
-function createProvideDescriptor(Class: Type, propertyKey: PropertyKey) {
+function createProvideDescriptor(Class: ClassType, propertyKey: PropertyKey) {
   return {
     get() {
       const instance = resolve(Class);
@@ -201,27 +215,27 @@ function createProvideDescriptor(Class: Type, propertyKey: PropertyKey) {
   };
 }
 
-function setInstance(Class: Type, instance: any) {
+function setInstance(Class: ClassType, instance: any) {
   if (typeof instances[zoneId] === "undefined") {
     instances[zoneId] = new Map();
   }
   instances[zoneId].set(Class, instance);
 }
 
-function getInstance(Class: Type): any {
+function getInstance(Class: ClassType): any {
   if (typeof instances[zoneId] !== "undefined") {
     return instances[zoneId].get(Class);
   }
 }
 
-function setOverride(From: Type, To: Type) {
+function setOverride(From: ClassType, To: ClassType) {
   if (typeof overrides[zoneId] === "undefined") {
     overrides[zoneId] = new Map();
   }
   overrides[zoneId].set(From, To);
 }
 
-function getOverride(From: Type): Type | undefined {
+function getOverride(From: ClassType): ClassType | undefined {
   let id = zoneId;
   while (typeof id !== "undefined") {
     if (typeof overrides[id] !== "undefined") {

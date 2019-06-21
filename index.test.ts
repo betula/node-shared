@@ -27,7 +27,7 @@ test("Should make instance of class only on demand", () => {
     @provide a: A;
   }
   const b = new B();
-  expect(instances[RootZoneId].size).toBe(0);
+  expect(instances[RootZoneId]).toBeUndefined();
   expect(typeof b.a.method).toBe("function");
   expect(instances[RootZoneId].size).toBe(1);
 });
@@ -92,8 +92,8 @@ test("Should work reset", () => {
   expect(instances[RootZoneId].size).toBe(2);
   expect(overrides[RootZoneId].size).toBe(1);
   reset();
-  expect(instances[RootZoneId].size).toBe(0);
-  expect(overrides[RootZoneId].size).toBe(0);
+  expect(instances[RootZoneId]).toBeUndefined();
+  expect(overrides[RootZoneId]).toBeUndefined();
 });
 
 test("Should work with JS semantic", () => {
