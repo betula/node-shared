@@ -14,12 +14,17 @@ class Container {
     get(): object;
   };
 }
+enum ResolvePhase {
+  Start,
+  Finish,
+}
 export const RootZoneId = 0;
 
 export const instances: ObjectMap<Map<ClassType, any>> = {};
 export const overrides: ObjectMap<Map<ClassType, any>> = {};
+export const resolvePhases: ObjectMap<Map<ClassType, ResolvePhase>> = {};
 
-let zoneId = RootZoneId;
+let zoneId: number = RootZoneId;
 
 export function getZoneId(): number {
   return zoneId;
@@ -80,8 +85,9 @@ export function provide(targetOrClassOrOptions: any, propertyKey?: any): any {
 export function resolve<T>(Class: ClassType<T>): T;
 export function resolve<T0, T1>(...Classes: [ClassType<T0>, ClassType<T1>]): [T0, T1];
 export function resolve<T0, T1, T2>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>]): [T0, T1, T2];
-export function resolve<T0, T1, T2, T4>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>, ClassType<T4>]): [T0, T1, T2, T4];
-export function resolve<T0, T1, T2, T4, T5>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>, ClassType<T4>, ClassType<T5>]): [T0, T1, T2, T4, T5];
+export function resolve<T0, T1, T2, T3>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>, ClassType<T3>]): [T0, T1, T2, T3];
+export function resolve<T0, T1, T2, T3, T4>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>, ClassType<T3>, ClassType<T4>]): [T0, T1, T2, T3, T4];
+export function resolve<T0, T1, T2, T3, T4, T5>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>, ClassType<T3>, ClassType<T4>, ClassType<T5>]): [T0, T1, T2, T3, T4, T5];
 export function resolve(...Classes: any[]): any {
   if (Classes.length > 1) {
     return Classes.map((Class) => resolve(Class));
@@ -95,7 +101,9 @@ export function resolve(...Classes: any[]): any {
       setInstance(Class, instance = resolve(OverrideClass));
       return instance;
     }
+    setResolvePhase(Class, ResolvePhase.Start);
     setInstance(Class, (instance = new Class()));
+    setResolvePhase(Class, ResolvePhase.Finish);
   }
   return instance;
 }
@@ -121,6 +129,10 @@ export function reset() {
   Object.keys(overrides).forEach((id) => {
     overrides[id].clear();
     delete overrides[id];
+  });
+  Object.keys(resolvePhases).forEach((id) => {
+    resolvePhases[id].clear();
+    delete resolvePhases[id];
   });
 }
 
@@ -213,6 +225,21 @@ function createProvideDescriptor(Class: ClassType, propertyKey: PropertyKey) {
     enumerable: true,
     configurable: true,
   };
+}
+
+function setResolvePhase(Class: ClassType, phase: ResolvePhase) {
+  if (typeof resolvePhases[zoneId] === "undefined") {
+    resolvePhases[zoneId] = new Map();
+  }
+  const currentPhase = resolvePhases[zoneId].get(Class);
+  if (currentPhase === ResolvePhase.Start && phase === ResolvePhase.Start) {
+    throw new Error("Circular dependency detected");
+  }
+  if (phase === ResolvePhase.Finish) {
+    resolvePhases[zoneId].delete(Class);
+  } else {
+    resolvePhases[zoneId].set(Class, phase);
+  }
 }
 
 function setInstance(Class: ClassType, instance: any) {
