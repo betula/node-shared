@@ -11,7 +11,8 @@
     ],
     "variable-name": false,
     "ter-arrow-parens": [true, "always"],
-    "max-line-length": false
+    "max-line-length": false,
+    "no-this-assignment": false
   },
   "rulesDirectory": [],
   "linterOptions": {

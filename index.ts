@@ -26,7 +26,16 @@ const zoneAsyncIndex: ObjectMap<number> = {};
 const zoneParentIndex: ObjectMap<number> = {};
 let hook: AsyncHook;
 
-export function isolate<T = any>(callback: () => T): Promise<T> {
+type ProxyMethods<T> = { [K in keyof T]: T[K] extends Function ? K : never }[keyof T];
+type Proxy<T> = {
+  readonly [P in ProxyMethods<T>]: T[P] extends (...args: infer A) => infer R
+    ? R extends Promise<any>
+      ? T[P]
+      : (...args: A) => Promise<R>
+    : never;
+};
+
+export function isolate<T = void>(callback: () => T): Promise<Proxy<T>> {
   if (typeof hook === "undefined") {
     hook = async_hooks.createHook({
       init(asyncId: number, type: any, triggerAsyncId: number) {
@@ -41,12 +50,16 @@ export function isolate<T = any>(callback: () => T): Promise<T> {
       },
     }).enable();
   }
-  return new Promise((resolve) => {
-    process.nextTick(() => {
+  return new Promise((resolve, reject) => {
+    process.nextTick(async () => {
       const asyncId = async_hooks.executionAsyncId();
       zoneParentIndex[asyncId] = zoneAsyncIndex[asyncId] || RootZoneId;
       zoneId = zoneAsyncIndex[asyncId] = asyncId;
-      resolve(callback());
+      try {
+        resolve(proxify(await callback()));
+      } catch (error) {
+        reject(error);
+      }
     });
   });
 }
@@ -99,7 +112,7 @@ type PropertyKey = string | symbol;
 type ClassType<T, K extends any[]> = new (...args: K) => T;
 type ProvideClassDecRetFn<T> = <P, M extends any[]>(Class: ClassType<P, M>) => ClassType<P & T, M>;
 
-export function provide(target: object, propertyKey: PropertyKey): void;
+export function provide(target: object, propertyKey: PropertyKey): any;
 export function provide(dep: Dep): (target: object, propertyKey: PropertyKey) => any;
 export function provide<T0 extends Deps>(...configs: [DepsConfig<T0>]): ProvideClassDecRetFn<T0>;
 export function provide<T0 extends Deps, T1 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>]): ProvideClassDecRetFn<T0 & T1>;
@@ -247,6 +260,83 @@ export function assign(...depOrDepInstPairs: any[]) {
       assign(OverrideDep, instance);
     }
   }
+}
+
+class Chan {
+  private signal: () => void;
+  private next: Promise<void>;
+  private queue: (() => void)[] = [];
+
+  constructor() {
+    this.start();
+  }
+
+  public fn<T, K extends any[]>(fn: (...args: K) => T, self?: object): (...args: K) => Promise<T> {
+    const chan = this;
+    return function (this: any, ...args: K) {
+      return new Promise((resolve, reject) => {
+        chan.run(() => {
+          try {
+            resolve(fn.apply(self || this, args));
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+    };
+  }
+
+  private run(fn: () => void) {
+    this.queue.push(fn);
+    this.signal();
+  }
+
+  private start() {
+    this.up();
+    process.nextTick(async () => {
+      while (true) {
+        await this.next;
+        this.up();
+        const actions = this.queue.splice(0);
+        actions.forEach((action) => action());
+      }
+    });
+  }
+
+  private up() {
+    this.next = new Promise((resolve) => {
+      this.signal = resolve;
+    });
+  }
+}
+
+function proxify<T>(val: T): Proxy<T> {
+  const chan = new Chan();
+  let proxy: any;
+  if (typeof val === "object" && val !== null) {
+    proxy = {};
+    const methods: any = {};
+    function collect(obj: object) {
+      if (obj.constructor !== Object) {
+        const descriptors = Object.getOwnPropertyDescriptors(obj);
+        Object.keys(descriptors).forEach((key) => {
+          if (typeof descriptors[key].value === "function" && key !== "constructor") {
+            methods[key] = key;
+          }
+        });
+        collect((obj as any).__proto__);
+      }
+    }
+    collect(val as any);
+    Object.keys(methods).forEach((key) => {
+      proxy[key] = chan.fn((val as any)[key], val as any);
+    });
+  } else if (typeof val === "function") {
+    proxy = (chan.fn as any)(val);
+  } else {
+    proxy = val;
+  }
+  return proxy;
 }
 
 function createProvideDescriptor(dep: Dep, propertyKey: PropertyKey) {
