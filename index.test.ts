@@ -12,7 +12,6 @@ import {
   reset,
   RootZoneId,
 } from "./index";
-import { ENGINE_METHOD_PKEY_ASN1_METHS } from "constants";
 
 afterEach(reset);
 
