@@ -1,32 +1,21 @@
 import async_hooks, { AsyncHook } from "async_hooks";
 import "reflect-metadata";
 
-type ClassType<T = any, K extends any[] = any[]> = new (...args: K) => T;
-type ClassTypifyObjectMap<T> = {
-  [P in keyof T]: ClassType<T[P]>;
-};
-type PropertyKey = string | symbol;
 type ObjectMap<T = any> = {
   [key: string]: T;
 };
-const ContainerSymbol = Symbol("Container");
-class Container {
-  // [ContainerSymbol] = true;
 
-  readonly [key: string]: {
-    get(): object;
-  };
-}
-enum ResolvePhase {
+type Dep<T = any> = (new () => T) | (() => T) | T;
+enum DepResolvePhase {
   Start,
   Finish,
 }
+
+export const instances: ObjectMap<Map<Dep, any>> = {};
+export const overrides: ObjectMap<Map<Dep, any>> = {};
+export const resolvePhases: ObjectMap<Map<Dep, DepResolvePhase>> = {};
+
 export const RootZoneId = 0;
-
-export const instances: ObjectMap<Map<ClassType, any>> = {};
-export const overrides: ObjectMap<Map<ClassType, any>> = {};
-export const resolvePhases: ObjectMap<Map<ClassType, ResolvePhase>> = {};
-
 let zoneId: number = RootZoneId;
 
 export function getZoneId(): number {
@@ -62,130 +51,40 @@ export function isolate<T = any>(callback: () => T): Promise<T> {
   });
 }
 
-type ProvideClassDecRetFn<T, K> = <P, M extends any[]>(Class: ClassType<P, M>) => ClassType<P & T & K, M>;
-type DepsUnit<T, K> = ClassTypifyObjectMap<T> | K;
-interface DepsConfig extends ObjectMap {}
-interface MoreDepsUnit extends ObjectMap {}
-interface Cont extends Container {}
-
-export function provide<T extends DepsConfig, K extends Cont>(...setOfDeps: [DepsUnit<T, K>, ...MoreDepsUnit[]]): ProvideClassDecRetFn<T, K>;
-export function provide(target: object, propertyKey: PropertyKey): any;
-export function provide(Class: ClassType): (target: object, propertyKey: PropertyKey) => any;
-export function provide(targetOrClassOrDeps: any, propertyKey?: any): any {
-  if (typeof targetOrClassOrDeps === "function") {
-    const Class = targetOrClassOrDeps;
-    return (target: object, propertyKey: PropertyKey): any => (
-      createProvideDescriptor(Class as ClassType, propertyKey)
-    );
-  }
-  if (typeof propertyKey === "undefined" || typeof propertyKey === "object") {
-    return (Class: any) => {
-      (attach as any)(Class.prototype, ...Array.prototype.slice.call(arguments));
-      return Class;
-    };
-  }
-  return createProvideDescriptor(
-    Reflect.getMetadata("design:type", targetOrClassOrDeps, propertyKey!),
-    propertyKey!,
-  );
-}
-
-// type Pick<T, K extends keyof T> = {
-//   [P in K]: T[P];
-// };
-
-// type ObjectPropertyNames<T> = { [K in keyof T]: T[K] extends object ? K : never }[keyof T];
-// type ObjectProperties<T> = Pick<T, ObjectPropertyNames<T>>;
-
-// type ContainerRet<T, K> = Container & ObjectProperties<T> & ObjectProperties<K>;
-// type ContainerRet_2<T0, K0, T1, K1> = Container & ObjectProperties<T0> & ObjectProperties<K0> & ObjectProperties<T1> & ObjectProperties<K1>;
-// type ContainerRet_3<T0, K0, T1, K1, T2, K2> = Container & ObjectProperties<T0> & ObjectProperties<K0> & ObjectProperties<T1> & ObjectProperties<K1> & ObjectProperties<T2> & ObjectProperties<K2>;
-
-
-type ContainerRet<T, K> = Container & T & K;
-type ContainerRet_2<T0, K0, T1, K1> = Container & T0 & K0 & T1 & K1;
-type ContainerRet_3<T0, K0, T1, K1, T2, K2> = Container & T0 & K0 & T1 & K1 & T2 & K2;
-
-class A { a: number; }
-class B { b: number; }
-class C { c: number; }
-// const m = container({ a: A }, { b: B }, container({ c: C }));
-// const p = container({ a: A });
-
-// const o = container({ a: A }, { b: B }, container({ c: C }))
-
-// type F<T> = {
-//   [P in keyof T]: T[P] extends object ? typeof T[P] : ;
-// };
-
-// interface Y<T extends ObjectMap> {
-
-// }
-
-// type Cnt<T = any> = {
-//   [P in keyof T]: T[P];
-// } & Container;
-
-container({a: typeof A })
-
-const l = container({ a: A });
-
-
-const u = container(l, { b: B, c: C });
-
-const t = container(u);
-
-// type Merge<T> = {
-//   [P in keyof T]: T[P];
-// };
-
-
-// type Hrr<T> = {
-//   [P in keyof T]: T[P] extends object ? T[P] : ClassType<T[P]>;
-// };
-///// ---- worked ----
-// export function container<T>(...setOfOptions: [Hrr<T>]): T;
-// type Hrr<T> = {
-//   [P in keyof T]: (T[P] extends (...args: any[]) => infer R ? R : ClassType<T[P]>) | T[P];
-// };
-//////
-
-type _DepsConfig<T> = {
-  [P in keyof T]: ClassType<T[P]> | T[P];
+type DepsConfig<T> = {
+  [P in keyof T]: Dep<T[P]>;
 };
-type _Deps = {
+type Deps = {
   [key: string]: any;
 };
-type _MoreDepsConfig = {
+type MoreDepsConfig = {
   [key: string]: any;
 };
+class Container {}
 
-// type _Cont<T extends ObjectMap = ObjectMap> = ObjMap<T> & { [ContainerSymbol]: boolean };
-
-// type _C = {
-//   [ContainerSymbol]: 1;
-// };
-
-export function container<T extends _Deps>(...setOfConfigs: [_DepsConfig<T>]): T;
-export function container<T0 extends _Deps, T1 extends _Deps>(...setOfConfigs: [_DepsConfig<T0>, _DepsConfig<T1>]): T0 & T1;
-export function container<T0 extends _Deps, T1 extends _Deps, T2 extends _Deps>(...setOfConfigs: [_DepsConfig<T0>, _DepsConfig<T1>, _DepsConfig<T2>]): T0 & T1 & T2;
-export function container<T0 extends _Deps, T1 extends _Deps, T2 extends _Deps, T3 extends _Deps>(...setOfConfigs: [_DepsConfig<T0>, _DepsConfig<T1>, _DepsConfig<T2>, _DepsConfig<T3>]): T0 & T1 & T2 & T3;
-export function container<T0 extends _Deps, T1 extends _Deps, T2 extends _Deps, T3 extends _Deps, T4 extends _Deps>(...setOfConfigs: [_DepsConfig<T0>, _DepsConfig<T1>, _DepsConfig<T2>, _DepsConfig<T3>, _DepsConfig<T4>, ..._MoreDepsConfig[]]): T0 & T1 & T2 & T3 & T4;
-
-
-// export function container<T extends DepsConfig, K extends Cont>(...setOfOptions: [DepsUnit<T, K>]): ContainerRet<T, K>;
-// export function container<T0 extends DepsConfig, K0 extends Cont, T1 extends DepsConfig, K1 extends Cont>(...setOfOptions: [DepsUnit<T0, K0>, DepsUnit<T1, K1>]): ContainerRet_2<T0, K0, T1, K1>;
-// export function container<T0 extends DepsConfig, K0 extends Cont, T1 extends DepsConfig, K1 extends Cont, T2 extends DepsConfig, K2 extends Cont>(...setOfOptions: [DepsUnit<T0, K0>, DepsUnit<T1, K1>, DepsUnit<T2, K2>, ...MoreDepsUnit[]]): ContainerRet_3<T0, K0, T1, K1, T2, K2>;
-export function container(...setOfConfigs: any[]) {
-  // Так же это может быть простым значением, каким угодно, его тоже обработать
+export function container<T0 extends Deps>(...configs: [DepsConfig<T0>]): T0;
+export function container<T0 extends Deps, T1 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>]): T0 & T1;
+export function container<T0 extends Deps, T1 extends Deps, T2 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>]): T0 & T1 & T2;
+export function container<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>]): T0 & T1 & T2 & T3;
+export function container<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps, T4 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>, DepsConfig<T4>, ...MoreDepsConfig[]]): T0 & T1 & T2 & T3 & T4;
+export function container(...configs: any[]) {
   const propDescriptors: any = {};
-  setOfConfigs.forEach((options: any) => {
+  configs.forEach((options: any) => {
     const isContainer = options instanceof Container;
     Object.keys(options).forEach((key) => {
+      let get;
+      if (isContainer) {
+        get = Object.getOwnPropertyDescriptor(options, key)!.get;
+      } else {
+        const val = options[key];
+        if (typeof val === "function") {
+          get = () => resolve(val);
+        } else {
+          get = () => val;
+        }
+      }
       propDescriptors[key] = {
-        get: isContainer
-          ? Object.getOwnPropertyDescriptor(options, key)!.get
-          : () => resolve((options as any)[key]),
+        get,
         enumerable: true,
         configurable: true,
       };
@@ -196,15 +95,43 @@ export function container(...setOfConfigs: any[]) {
   return cont;
 }
 
-type AttachRet<Y, T, K> = Y & T & K;
-type AttachRet_2<Y, T0, K0, T1, K1> = Y & T0 & K0 & T1 & K1;
-type AttachRet_3<Y, T0, K0, T1, K1, T2, K2> = Y & T0 & K0 & T1 & K1 & T2 & K2;
+type PropertyKey = string | symbol;
+type ClassType<T, K extends any[]> = new (...args: K) => T;
+type ProvideClassDecRetFn<T> = <P, M extends any[]>(Class: ClassType<P, M>) => ClassType<P & T, M>;
 
-export function attach<Y extends object, T extends DepsConfig, K extends Cont>(target: Y, ...setOfOptions: [DepsUnit<T, K>]): AttachRet<Y, T, K>;
-export function attach<Y extends object, T0 extends DepsConfig, K0 extends Cont, T1 extends DepsConfig, K1 extends Cont>(target: Y, ...setOfOptions: [DepsUnit<T0, K0>, DepsUnit<T1, K1>]): AttachRet_2<Y, T0, K0, T1, K1>;
-export function attach<Y extends object, T0 extends DepsConfig, K0 extends Cont, T1 extends DepsConfig, K1 extends Cont, T2 extends DepsConfig, K2 extends Cont>(target: Y, ...setOfOptions: [DepsUnit<T0, K0>, DepsUnit<T1, K1>, DepsUnit<T2, K2>, ...MoreDepsUnit[]]): AttachRet_3<Y, T0, K0, T1, K1, T2, K2>;
-export function attach(target: any, ...setOfOptions: any[]) {
-  const cont = (container as any)(...setOfOptions);
+export function provide(target: object, propertyKey: PropertyKey): void;
+export function provide(dep: Dep): (target: object, propertyKey: PropertyKey) => any;
+export function provide<T0 extends Deps>(...configs: [DepsConfig<T0>]): ProvideClassDecRetFn<T0>;
+export function provide<T0 extends Deps, T1 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>]): ProvideClassDecRetFn<T0 & T1>;
+export function provide<T0 extends Deps, T1 extends Deps, T2 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>]): ProvideClassDecRetFn<T0 & T1 & T2>;
+export function provide<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>]): ProvideClassDecRetFn<T0 & T1 & T2 & T3>;
+export function provide<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps, T4 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>, DepsConfig<T4>, ...MoreDepsConfig[]]): ProvideClassDecRetFn<T0 & T1 & T2 & T3 & T4>;
+export function provide(targetOrDepOrConfigs: any, propertyKey?: any): any {
+  if (typeof targetOrDepOrConfigs === "function") {
+    const dep = targetOrDepOrConfigs;
+    return (target: object, propertyKey: PropertyKey): any => (
+      createProvideDescriptor(dep as Dep, propertyKey)
+    );
+  }
+  if (typeof propertyKey === "undefined" || typeof propertyKey === "object") {
+    return (Class: any) => {
+      (attach as any)(Class.prototype, ...Array.prototype.slice.call(arguments));
+      return Class;
+    };
+  }
+  return createProvideDescriptor(
+    Reflect.getMetadata("design:type", targetOrDepOrConfigs, propertyKey!),
+    propertyKey!,
+  );
+}
+
+export function attach<Y extends object, T0 extends Deps>(target: Y, ...configs: [DepsConfig<T0>]): Y & T0;
+export function attach<Y extends object, T0 extends Deps, T1 extends Deps>(target: Y, ...configs: [DepsConfig<T0>, DepsConfig<T1>]): Y & T0 & T1;
+export function attach<Y extends object, T0 extends Deps, T1 extends Deps, T2 extends Deps>(target: Y, ...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>]): Y & T0 & T1 & T2;
+export function attach<Y extends object, T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps>(target: Y, ...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>]): Y & T0 & T1 & T2 & T3;
+export function attach<Y extends object, T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps, T4 extends Deps>(target: Y, ...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>, DepsConfig<T4>, ...MoreDepsConfig[]]): Y & T0 & T1 & T2 & T3 & T4;
+export function attach(target: any, ...configs: any[]) {
+  const cont = (container as any)(...configs);
   const containerDescriptors = Object.getOwnPropertyDescriptors(cont);
   Object.keys(containerDescriptors).forEach((key) => {
     Object.defineProperty(target, key, {
@@ -225,26 +152,15 @@ export function attach(target: any, ...setOfOptions: any[]) {
   return target;
 }
 
-type BindDecFn<T> = <M extends any[], P extends any>(func: (cont: T, ...args: M) => P) => ((...args: M) => P);
-type BindRet<T, K> = BindDecFn<ContainerRet<T, K>>;
-type BindRet_2<T0, K0, T1, K1> = BindDecFn<ContainerRet_2<T0, K0, T1, K1>>;
-type BindRet_3<T0, K0, T1, K1, T2, K2> = BindDecFn<ContainerRet_3<T0, K0, T1, K1, T2, K2>>;
+type BindDecRetFn<T> = <M extends any[], P>(func: (cont: T, ...args: M) => P) => ((...args: M) => P);
 
-// class A { a: number; }
-// class B { b: number; }
-// class C { c: number; }
-// const m = container({ a: A }, { b: B }, container({ c: C }));
-// const p = container({ a: A });
-
-// const o = container({ a: A }, { b: B }, container({ c: C }))
-
-// bind(o)((cont, x: string) => cont.b.b)("hello");
-
-export function bind<T extends DepsConfig, K extends Cont>(...setOfOptions: [DepsUnit<T, K>]): BindRet<T, K>;
-export function bind<T0 extends DepsConfig, K0 extends Cont, T1 extends DepsConfig, K1 extends Cont>(...setOfOptions: [DepsUnit<T0, K0>, DepsUnit<T1, K1>]): BindRet_2<T0, K0, T1, K1>;
-export function bind<T0 extends DepsConfig, K0 extends Cont, T1 extends DepsConfig, K1 extends Cont, T2 extends DepsConfig, K2 extends Cont>(...setOfOptions: [DepsUnit<T0, K0>, DepsUnit<T1, K1>, DepsUnit<T2, K2>, ...MoreDepsUnit[]]): BindRet_3<T0, K0, T1, K1, T2, K2>;
-export function bind(...setOfOptions: any[]) {
-  const cont = (container as any)(...setOfOptions);
+export function bind<T0 extends Deps>(...configs: [DepsConfig<T0>]): BindDecRetFn<T0>;
+export function bind<T0 extends Deps, T1 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>]): BindDecRetFn<T0 & T1>;
+export function bind<T0 extends Deps, T1 extends Deps, T2 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>]): BindDecRetFn<T0 & T1 & T2>;
+export function bind<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>]): BindDecRetFn<T0 & T1 & T2 & T3>;
+export function bind<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps, T4 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>, DepsConfig<T4>, ...MoreDepsConfig[]]): BindDecRetFn<T0 & T1 & T2 & T3 & T4>;
+export function bind(...configs: any[]) {
+  const cont = (container as any)(...configs);
   return (func: any) => {
     return function (this: any, ...args: any[]): any {
       return func.call(this, cont, ...args);
@@ -252,44 +168,52 @@ export function bind(...setOfOptions: any[]) {
   };
 }
 
-// Обработать ...More
-
-export function resolve<T>(Class: ClassType<T>): T;
-export function resolve<T0, T1>(...Classes: [ClassType<T0>, ClassType<T1>]): [T0, T1];
-export function resolve<T0, T1, T2>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>]): [T0, T1, T2];
-export function resolve<T0, T1, T2, T3>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>, ClassType<T3>]): [T0, T1, T2, T3];
-export function resolve<T0, T1, T2, T3, T4>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>, ClassType<T3>, ClassType<T4>]): [T0, T1, T2, T3, T4];
-export function resolve<T0, T1, T2, T3, T4, T5>(...Classes: [ClassType<T0>, ClassType<T1>, ClassType<T2>, ClassType<T3>, ClassType<T4>, ClassType<T5>]): [T0, T1, T2, T3, T4, T5];
-export function resolve(...Classes: any[]) {
-  if (Classes.length > 1) {
-    return Classes.map((Class) => resolve(Class));
+export function resolve<T0>(...deps: [Dep<T0>]): T0;
+export function resolve<T0, T1>(...deps: [Dep<T0>, Dep<T1>]): [T0, T1];
+export function resolve<T0, T1, T2>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>]): [T0, T1, T2];
+export function resolve<T0, T1, T2, T3>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>]): [T0, T1, T2, T3];
+export function resolve<T0, T1, T2, T3, T4>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>]): [T0, T1, T2, T3, T4];
+export function resolve<T0, T1, T2, T3, T4, T5>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>, Dep<T5>]): [T0, T1, T2, T3, T4, T5];
+export function resolve<T0, T1, T2, T3, T4, T5, T6>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>, Dep<T5>, Dep<T6>]): [T0, T1, T2, T3, T4, T5, T6];
+export function resolve<T0, T1, T2, T3, T4, T5, T6, T7>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>, Dep<T5>, Dep<T6>, Dep<T7>]): [T0, T1, T2, T3, T4, T5, T6, T7];
+export function resolve<T0, T1, T2, T3, T4, T5, T6, T7, T8>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>, Dep<T5>, Dep<T6>, Dep<T7>, Dep<T8>]): [T0, T1, T2, T3, T4, T5, T6, T7, T8];
+export function resolve<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>, Dep<T5>, Dep<T6>, Dep<T7>, Dep<T8>, Dep<T9>, ...Dep[]]): [T0, T1, T2, T3, T4, T5, T6, T7, T8, T9];
+export function resolve(...deps: any[]) {
+  if (deps.length > 1) {
+    return deps.map((dep) => resolve(dep));
   }
   let instance;
-  const Class = Classes[0];
-  instance = getInstance(Class);
+  const dep = deps[0];
+  instance = getInstance(dep);
   if (!instance) {
-    const OverrideClass = getOverride(Class);
-    if (typeof OverrideClass !== "undefined") {
-      setInstance(Class, instance = resolve(OverrideClass));
+    const OverrideDep = getOverride(dep);
+    if (typeof OverrideDep !== "undefined") {
+      setInstance(dep, instance = resolve(OverrideDep));
       return instance;
     }
-    setResolvePhase(Class, ResolvePhase.Start);
-    setInstance(Class, (instance = new Class()));
-    setResolvePhase(Class, ResolvePhase.Finish);
+    setResolvePhase(dep, DepResolvePhase.Start);
+    if (typeof dep === "function") {
+      instance = (typeof dep.prototype === "undefined")
+        ? dep()
+        : new dep();
+    } else {
+      instance = dep;
+    }
+    setInstance(dep, instance);
+    setResolvePhase(dep, DepResolvePhase.Finish);
   }
   return instance;
 }
 
-type OverridePair<T = any> = [ClassType<T>, ClassType<T>];
-type OverridePairs<T = any> = OverridePair<T>[];
+type DepsPair = [Dep, Dep];
 
-export function override(from: ClassType, to: ClassType): void;
-export function override(...fromToPairs: OverridePairs): void;
+export function override(from: Dep, to: Dep): void;
+export function override(...fromToPairs: DepsPair[]): void;
 export function override(...fromOrFromToPairs: any[]) {
   if (Array.isArray(fromOrFromToPairs[0])) {
-    (fromOrFromToPairs as OverridePairs).forEach((pair) => setOverride(...pair));
+    (fromOrFromToPairs as DepsPair[]).forEach((pair) => setOverride(...pair));
   } else {
-    setOverride(...fromOrFromToPairs as OverridePair);
+    setOverride(...fromOrFromToPairs as DepsPair);
   }
 }
 
@@ -308,28 +232,27 @@ export function reset() {
   });
 }
 
-type AssignPair<T = any> = [ClassType<T>, T];
-type AssignPairs<T = any> = AssignPair<T>[];
+type DepInstPair<T = any> = [Dep<T>, T];
 
-export function assign(Class: ClassType, instance: any): void;
-export function assign(...ClassInstPairs: AssignPairs): void;
-export function assign(...ClassOrClassInstPairs: any[]) {
-  if (Array.isArray(ClassOrClassInstPairs[0])) {
-    (ClassOrClassInstPairs as AssignPairs).forEach((pair) => assign(...pair));
+export function assign(dep: Dep, instance: any): void;
+export function assign(...depInstPairs: DepInstPair[]): void;
+export function assign(...depOrDepInstPairs: any[]) {
+  if (Array.isArray(depOrDepInstPairs[0])) {
+    (depOrDepInstPairs as DepInstPair[]).forEach((pair) => assign(...pair));
   } else {
-    const [Class, instance] = ClassOrClassInstPairs;
-    setInstance(Class, instance);
-    const OverrideClass = getOverride(Class);
-    if (typeof OverrideClass !== "undefined") {
-      assign(OverrideClass, instance);
+    const [dep, instance] = depOrDepInstPairs;
+    setInstance(dep, instance);
+    const OverrideDep = getOverride(dep);
+    if (typeof OverrideDep !== "undefined") {
+      assign(OverrideDep, instance);
     }
   }
 }
 
-function createProvideDescriptor(Class: ClassType, propertyKey: PropertyKey) {
+function createProvideDescriptor(dep: Dep, propertyKey: PropertyKey) {
   return {
     get() {
-      const instance = resolve(Class);
+      const instance = resolve(dep);
       Object.defineProperty(this, propertyKey, {
         value: instance,
         enumerable: true,
@@ -343,48 +266,48 @@ function createProvideDescriptor(Class: ClassType, propertyKey: PropertyKey) {
   };
 }
 
-function setResolvePhase(Class: ClassType, phase: ResolvePhase) {
+function setResolvePhase(dep: Dep, phase: DepResolvePhase) {
   if (typeof resolvePhases[zoneId] === "undefined") {
     resolvePhases[zoneId] = new Map();
   }
-  const currentPhase = resolvePhases[zoneId].get(Class);
-  if (currentPhase === ResolvePhase.Start && phase === ResolvePhase.Start) {
+  const currentPhase = resolvePhases[zoneId].get(dep);
+  if (currentPhase === DepResolvePhase.Start && phase === DepResolvePhase.Start) {
     throw new Error("Circular dependency detected");
   }
-  if (phase === ResolvePhase.Finish) {
-    resolvePhases[zoneId].delete(Class);
+  if (phase === DepResolvePhase.Finish) {
+    resolvePhases[zoneId].delete(dep);
   } else {
-    resolvePhases[zoneId].set(Class, phase);
+    resolvePhases[zoneId].set(dep, phase);
   }
 }
 
-function setInstance(Class: ClassType, instance: any) {
+function setInstance(dep: Dep, instance: any) {
   if (typeof instances[zoneId] === "undefined") {
     instances[zoneId] = new Map();
   }
-  instances[zoneId].set(Class, instance);
+  instances[zoneId].set(dep, instance);
 }
 
-function getInstance(Class: ClassType): any {
+function getInstance(dep: Dep): any {
   if (typeof instances[zoneId] !== "undefined") {
-    return instances[zoneId].get(Class);
+    return instances[zoneId].get(dep);
   }
 }
 
-function setOverride(From: ClassType, To: ClassType) {
+function setOverride(from: Dep, to: Dep) {
   if (typeof overrides[zoneId] === "undefined") {
     overrides[zoneId] = new Map();
   }
-  overrides[zoneId].set(From, To);
+  overrides[zoneId].set(from, to);
 }
 
-function getOverride(From: ClassType): ClassType | undefined {
+function getOverride(from: Dep): Dep | undefined {
   let id = zoneId;
   while (typeof id !== "undefined") {
     if (typeof overrides[id] !== "undefined") {
-      const To = overrides[id].get(From);
-      if (typeof To !== "undefined") {
-        return To;
+      const to = overrides[id].get(from);
+      if (typeof to !== "undefined") {
+        return to;
       }
     }
     id = zoneParentIndex[id];

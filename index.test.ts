@@ -118,10 +118,14 @@ test("Should work container function", () => {
   class A {}
   class B {}
   class C {}
-  const m = container({ a: A }, container({ b: B }), { c: C });
+  const F = (): { n: number } => ({ n: 10 });
+  const m = container({ a: A }, container({ b: B }), { c: C, f: F });
+  const p = container(m, { k: "K" });
   expect(m.a).toBeInstanceOf(A);
   expect(m.b).toBeInstanceOf(B);
   expect(m.c).toBeInstanceOf(C);
+  expect(p.f.n).toBe(10);
+  expect(p.k).toBe("K");
 });
 
 test("Should work attach function", () => {
