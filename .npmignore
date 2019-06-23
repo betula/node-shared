@@ -7,3 +7,4 @@ tsconfig.json
 index.ts
 .gitattributes
 coverage
+.travis.yml
