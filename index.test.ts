@@ -292,14 +292,15 @@ test("Should work isolate with local override", async () => {
 });
 
 test("Should work isolate proxy", async () => {
-  class A { am() { return "a"; } }
+  class A { def = "default"; am() { return "a"; } }
   class B extends A { bm() { return "b"; } }
   expect((await isolate(() => new B())).am()).resolves.toBe("a");
   expect((await isolate(() => new B())).bm()).resolves.toBe("b");
+  expect((await isolate(() => new B())).def).toBe("default");
   expect((await isolate(() => ({ am() { return "om"; } }))).am()).resolves.toBe("om");
   expect((await isolate(() => ({ am() { return "om"; }, k: 11 }))).k).toBe(11);
-  expect(((await isolate(() => [((): any => 0), 11])) as any)[0]()).resolves.toBe(0);
-  expect((await isolate(() => [((): any => 0), 11]))[1]).toBe(11);
+  expect((await isolate(() => [(():number => 0), 11]))[0]()).resolves.toBe(0);
+  expect((await isolate(() => [(():number => 0), 11]))[1]).toBe(11);
   expect((await isolate(() => () => 0))()).resolves.toBe(0);
   expect(isolate(() => 10)).resolves.toBe(10);
   expect(isolate(() => null)).resolves.toBe(null);

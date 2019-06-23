@@ -38,9 +38,11 @@ type ProxyObject<T> = {
 };
 type Proxy<T> = T extends Function
   ? ProxyFunction<T>
-  : T extends object
-    ? ProxyObject<T>
-    : T;
+  : T extends any[]
+    ? any[]
+    : T extends object
+      ? ProxyObject<T>
+      : T;
 
 export function isolate<T = void>(callback: () => T): Promise<Proxy<T>> {
   if (typeof hook === "undefined") {
