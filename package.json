@@ -22,8 +22,8 @@
     "injection",
     "node"
   ],
-  "author": "betula <mail@betula.co>",
-  "license": "ISC",
+  "author": "Viacheslav Bereza <mail@betula.co>",
+  "license": "MIT",
   "dependencies": {
     "reflect-metadata": "^0.1.13"
   },
