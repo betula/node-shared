@@ -1,11 +1,10 @@
 *~
 *.swp
+.DS_Store
 tmp/
 npm-debug.log
-.DS_Store
-
+yarn-error.log
 .vscode/
 node_modules/
-.dist
-
-yarn-error.log
+.dist/
+coverage/

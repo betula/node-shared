@@ -10,6 +10,7 @@ import {
   isolate,
   assign,
   reset,
+  getZoneId,
   RootZoneId,
 } from "./index";
 
@@ -291,20 +292,46 @@ test("Should work isolate with local override", async () => {
 });
 
 test("Should work isolate proxy", async () => {
-  class A { am() {} }
-  class B extends A { bm() {} }
-  expect((await isolate(() => new B())).am()).toBeInstanceOf(Promise);
-  expect((await isolate(() => new B())).bm()).toBeInstanceOf(Promise);
-  expect((await isolate(() => ({ am() {} }))).am()).toBeInstanceOf(Promise);
-  expect((await isolate(() => [() => 0]))[0]()).toBeInstanceOf(Promise);
-  expect(await isolate(() => 10)).toBe(10);
-  expect(await isolate(() => null)).toBe(null);
-  expect(await isolate(() => "hello")).toBe("hello");
-  expect(await isolate(() => new Date())).toBeInstanceOf(Date);
-  expect(await isolate(() => new Map())).toBeInstanceOf(Map);
-  expect(await isolate(() => new WeakMap())).toBeInstanceOf(WeakMap);
-  expect(await isolate(() => new WeakSet())).toBeInstanceOf(WeakSet);
-  expect(await isolate(() => new Error())).toBeInstanceOf(Error);
+  class A { am() { return "a"; } }
+  class B extends A { bm() { return "b"; } }
+  expect((await isolate(() => new B())).am()).resolves.toBe("a");
+  expect((await isolate(() => new B())).bm()).resolves.toBe("b");
+  expect((await isolate(() => ({ am() { return "om"; } }))).am()).resolves.toBe("om");
+  expect((await isolate(() => ({ am() { return "om"; }, k: 11 }))).k).toBe(11);
+  expect(((await isolate(() => [((): any => 0), 11])) as any)[0]()).resolves.toBe(0);
+  expect((await isolate(() => [((): any => 0), 11]))[1]).toBe(11);
+  expect((await isolate(() => () => 0))()).resolves.toBe(0);
+  expect(isolate(() => 10)).resolves.toBe(10);
+  expect(isolate(() => null)).resolves.toBe(null);
+  expect(isolate(() => "hello")).resolves.toBe("hello");
+  expect(isolate(() => undefined)).resolves.toBe(undefined);
+  expect(isolate(() => new Date())).resolves.toBeInstanceOf(Date);
+  expect(isolate(() => new Map())).resolves.toBeInstanceOf(Map);
+  expect(isolate(() => new WeakMap())).resolves.toBeInstanceOf(WeakMap);
+  expect(isolate(() => new WeakSet())).resolves.toBeInstanceOf(WeakSet);
+  expect(isolate(() => new Error())).resolves.toBeInstanceOf(Error);
+});
+
+test("Should throw error in isolate", async () => {
+  await expect(isolate(() => { throw new Error("A"); })).rejects.toThrow("A");
+});
+
+test("Should throw error in isolate proxy", async () => {
+  const proxy = await isolate(() => {
+    return {
+      mtd():void { throw new Error("Mtd"); },
+    };
+  });
+  await expect(proxy.mtd()).rejects.toThrow("Mtd");
+});
+
+test("Should work getting current zone id", async () => {
+  expect(getZoneId()).toBe(RootZoneId);
+  const z1 = await isolate(getZoneId);
+  expect(z1).not.toBe(RootZoneId);
+  const z2 = await isolate(getZoneId);
+  expect(z2).not.toBe(RootZoneId);
+  expect(z2).not.toBe(z1);
 });
 
 test("Should throw error when circular dependency detected", () => {
@@ -318,5 +345,5 @@ test("Should throw error when circular dependency detected", () => {
   function func() {
     return resolve(A);
   }
-  expect(() => resolve(A)).toThrow();
+  expect(() => resolve(A)).toThrow("Circular dependency detected");
 });

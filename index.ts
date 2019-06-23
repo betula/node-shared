@@ -26,14 +26,21 @@ const zoneAsyncIndex: ObjectMap<number> = {};
 const zoneParentIndex: ObjectMap<number> = {};
 let hook: AsyncHook;
 
-type ProxyMethods<T> = { [K in keyof T]: T[K] extends Function ? K : never }[keyof T];
-type Proxy<T> = {
-  readonly [P in ProxyMethods<T>]: T[P] extends (...args: infer A) => infer R
-    ? R extends Promise<any>
-      ? T[P]
-      : (...args: A) => Promise<R>
-    : never;
+type ProxyFunction<T> = T extends (...args: infer A) => infer R
+  ? R extends Promise<any>
+    ? T
+    : (...args: A) => Promise<R>
+  : never;
+type ProxyObject<T> = {
+  readonly [P in keyof T]: T[P] extends Function
+    ? ProxyFunction<T[P]>
+    : T[P]
 };
+type Proxy<T> = T extends Function
+  ? ProxyFunction<T>
+  : T extends object
+    ? ProxyObject<T>
+    : T;
 
 export function isolate<T = void>(callback: () => T): Promise<Proxy<T>> {
   if (typeof hook === "undefined") {
@@ -46,6 +53,7 @@ export function isolate<T = void>(callback: () => T): Promise<Proxy<T>> {
         zoneId = zoneAsyncIndex[asyncId] || RootZoneId;
       },
       destroy(asyncId: number) {
+        /* istanbul ignore next */
         delete zoneAsyncIndex[asyncId];
       },
     }).enable();
@@ -323,8 +331,14 @@ function proxify<T>(val: T): Proxy<T> {
     && [Date, Error, Map, Set, WeakMap, WeakSet].every((type) => !(val instanceof type))
   ) {
     proxy = {};
+    Object.keys(val).forEach((key) => {
+      const v = (val as any)[key];
+      if (typeof v !== "function") {
+        proxy[key] = v;
+      }
+    });
     const methods: any = {};
-    function collect(obj: object) {
+    function collectMethods(obj: object) {
       if (obj && obj !== Object.prototype) {
         const descriptors = Object.getOwnPropertyDescriptors(obj);
         Object.keys(descriptors).forEach((key) => {
@@ -332,10 +346,10 @@ function proxify<T>(val: T): Proxy<T> {
             methods[key] = key;
           }
         });
-        collect((obj as any).__proto__);
+        collectMethods((obj as any).__proto__);
       }
     }
-    collect(val as any);
+    collectMethods(val as any);
     Object.keys(methods).forEach((key) => {
       proxy[key] = chan.fn((val as any)[key], val as any);
     });

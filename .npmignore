@@ -6,3 +6,4 @@ index.test.ts
 tsconfig.json
 index.ts
 .gitattributes
+coverage

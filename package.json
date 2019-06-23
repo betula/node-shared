@@ -10,6 +10,7 @@
   "scripts": {
     "build": "npx tsc",
     "test": "npx jest",
+    "report": "npx jest --coverage",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
     "prepare": "npm run tslint && npm run test && npm run build"
   },
