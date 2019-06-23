@@ -10,6 +10,7 @@
   "scripts": {
     "build": "npx tsc",
     "test": "npx jest --coverage",
+    "coveralls": "jest --coverage && cat ./coverage/lcov.info | coveralls",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
     "prepare": "npm run tslint && npm run test && npm run build"
   },
@@ -33,6 +34,7 @@
     "tslint-config-airbnb": "^5.11.1",
     "jest": "^24.8.0",
     "ts-jest": "^24.0.2",
-    "@types/jest": "^24.0.13"
+    "@types/jest": "^24.0.13",
+    "coveralls": "^3.0.4"
   }
 }

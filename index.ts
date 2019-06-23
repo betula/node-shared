@@ -54,8 +54,8 @@ export function isolate<T = void>(callback: () => T): Promise<Proxy<T>> {
       before(asyncId: number) {
         zoneId = zoneAsyncIndex[asyncId] || RootZoneId;
       },
+      /* istanbul ignore next */
       destroy(asyncId: number) {
-        /* istanbul ignore next */
         delete zoneAsyncIndex[asyncId];
       },
     }).enable();

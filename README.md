@@ -1,3 +1,8 @@
+[![npm version](https://badge.fury.io/js/node-provide.svg)](https://badge.fury.io/js/node-provide)
+[![Build Status](https://travis-ci.org/betula/node-provide.svg?branch=master)](https://travis-ci.org/betula/node-provide)
+[![Coverage Status](https://coveralls.io/repos/github/betula/node-provide/badge.svg?branch=master)](https://coveralls.io/github/betula/node-provide?branch=master)
+
+
 node-provide is more than simple decorator for control your dependencies. It's a powerful instrument for organizing the architecture of your application.
 
 The better experience you will get if you use node-provide with TypeScript because in this case, you can get an instance of your dependency with 9 character instruction.
