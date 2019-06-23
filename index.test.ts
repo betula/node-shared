@@ -290,6 +290,23 @@ test("Should work isolate with local override", async () => {
   expect(spyF).toBeCalledTimes(2);
 });
 
+test("Should work isolate proxy", async () => {
+  class A { am() {} }
+  class B extends A { bm() {} }
+  expect((await isolate(() => new B())).am()).toBeInstanceOf(Promise);
+  expect((await isolate(() => new B())).bm()).toBeInstanceOf(Promise);
+  expect((await isolate(() => ({ am() {} }))).am()).toBeInstanceOf(Promise);
+  expect((await isolate(() => [() => 0]))[0]()).toBeInstanceOf(Promise);
+  expect(await isolate(() => 10)).toBe(10);
+  expect(await isolate(() => null)).toBe(null);
+  expect(await isolate(() => "hello")).toBe("hello");
+  expect(await isolate(() => new Date())).toBeInstanceOf(Date);
+  expect(await isolate(() => new Map())).toBeInstanceOf(Map);
+  expect(await isolate(() => new WeakMap())).toBeInstanceOf(WeakMap);
+  expect(await isolate(() => new WeakSet())).toBeInstanceOf(WeakSet);
+  expect(await isolate(() => new Error())).toBeInstanceOf(Error);
+});
+
 test("Should throw error when circular dependency detected", () => {
   class A {
     @provide(func) f: A;

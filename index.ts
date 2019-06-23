@@ -230,21 +230,6 @@ export function override(...fromOrFromToPairs: any[]) {
   }
 }
 
-export function reset() {
-  Object.keys(instances).forEach((id) => {
-    instances[id].clear();
-    delete instances[id];
-  });
-  Object.keys(overrides).forEach((id) => {
-    overrides[id].clear();
-    delete overrides[id];
-  });
-  Object.keys(resolvePhases).forEach((id) => {
-    resolvePhases[id].clear();
-    delete resolvePhases[id];
-  });
-}
-
 type DepInstPair<T = any> = [Dep<T>, T];
 
 export function assign(dep: Dep, instance: any): void;
@@ -260,6 +245,21 @@ export function assign(...depOrDepInstPairs: any[]) {
       assign(OverrideDep, instance);
     }
   }
+}
+
+export function reset() {
+  Object.keys(instances).forEach((id) => {
+    instances[id].clear();
+    delete instances[id];
+  });
+  Object.keys(overrides).forEach((id) => {
+    overrides[id].clear();
+    delete overrides[id];
+  });
+  Object.keys(resolvePhases).forEach((id) => {
+    resolvePhases[id].clear();
+    delete resolvePhases[id];
+  });
 }
 
 class Chan {
@@ -313,11 +313,19 @@ class Chan {
 function proxify<T>(val: T): Proxy<T> {
   const chan = new Chan();
   let proxy: any;
-  if (typeof val === "object" && val !== null) {
+  if (Array.isArray(val)) {
+    proxy = (val as any[]).map((v) => (
+      (typeof v === "function")
+        ? chan.fn(v)
+        : v
+    ));
+  } else if (val && typeof val === "object"
+    && [Date, Error, Map, Set, WeakMap, WeakSet].every((type) => !(val instanceof type))
+  ) {
     proxy = {};
     const methods: any = {};
     function collect(obj: object) {
-      if (obj.constructor !== Object) {
+      if (obj && obj !== Object.prototype) {
         const descriptors = Object.getOwnPropertyDescriptors(obj);
         Object.keys(descriptors).forEach((key) => {
           if (typeof descriptors[key].value === "function" && key !== "constructor") {
