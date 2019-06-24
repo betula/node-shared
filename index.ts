@@ -5,7 +5,8 @@ type ObjectMap<T = any> = {
   [key: string]: T;
 };
 
-type Dep<T = any> = (new () => T) | (() => T) | T;
+type ClassType<T = any, K extends any[] = any> = new (...args: K) => T;
+type Dep<T = any> = ClassType<T> | (() => T) | T;
 enum DepResolvePhase {
   Start,
   Finish,
@@ -119,33 +120,62 @@ export function container(...configs: any[]) {
 }
 
 type PropertyKey = string | symbol;
-type ClassType<T, K extends any[]> = new (...args: K) => T;
-type ProvideClassDecRetFn<T> = <P, M extends any[]>(Class: ClassType<P, M>) => ClassType<P & T, M>;
 
 export function provide(target: object, propertyKey: PropertyKey): any;
 export function provide(dep: Dep): (target: object, propertyKey: PropertyKey) => any;
-export function provide<T0 extends Deps>(...configs: [DepsConfig<T0>]): ProvideClassDecRetFn<T0>;
-export function provide<T0 extends Deps, T1 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>]): ProvideClassDecRetFn<T0 & T1>;
-export function provide<T0 extends Deps, T1 extends Deps, T2 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>]): ProvideClassDecRetFn<T0 & T1 & T2>;
-export function provide<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>]): ProvideClassDecRetFn<T0 & T1 & T2 & T3>;
-export function provide<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps, T4 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>, DepsConfig<T4>, ...MoreDepsConfig[]]): ProvideClassDecRetFn<T0 & T1 & T2 & T3 & T4>;
-export function provide(targetOrDepOrConfigs: any, propertyKey?: any): any {
-  if (typeof targetOrDepOrConfigs === "function") {
-    const dep = targetOrDepOrConfigs;
+export function provide(targetOrDep: any, propertyKey?: any): any {
+  if (typeof propertyKey === "undefined") {
+    const dep: Dep = targetOrDep;
     return (target: object, propertyKey: PropertyKey): any => (
-      createProvideDescriptor(dep as Dep, propertyKey)
+      createProvideDescriptor(dep, propertyKey)
     );
   }
-  if (typeof propertyKey === "undefined" || typeof propertyKey === "object") {
-    return (Class: any) => {
-      (attach as any)(Class.prototype, ...Array.prototype.slice.call(arguments));
-      return Class;
-    };
-  }
   return createProvideDescriptor(
-    Reflect.getMetadata("design:type", targetOrDepOrConfigs, propertyKey!),
+    Reflect.getMetadata("design:type", targetOrDep, propertyKey!),
     propertyKey!,
   );
+}
+
+type InjectDecRetFn<T> = <P>(target: P) =>
+  P extends ClassType<infer M, infer K>
+    ? ClassType<M & T, K>
+    : P & T;
+
+export function inject(): <T extends any>(target: ClassType<T>) => ClassType<T, []>;
+export function inject<T extends ClassType>(Class: T): T extends ClassType<infer U> ? ClassType<U, []> : never;
+export function inject<T0 extends Deps>(...configs: [DepsConfig<T0>]): InjectDecRetFn<T0>;
+export function inject<T0 extends Deps, T1 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>]): InjectDecRetFn<T0 & T1>;
+export function inject<T0 extends Deps, T1 extends Deps, T2 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>]): InjectDecRetFn<T0 & T1 & T2>;
+export function inject<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>]): InjectDecRetFn<T0 & T1 & T2 & T3>;
+export function inject<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps, T4 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>, DepsConfig<T4>, ...MoreDepsConfig[]]): InjectDecRetFn<T0 & T1 & T2 & T3 & T4>;
+export function inject(...configsOrClass: any[]) {
+  if (configsOrClass.length === 0) {
+    return (Class: any) => {
+      const types = Reflect.getMetadata("design:paramtypes", Class);
+      if (!types || types.length === 0) {
+        return Class;
+      }
+      if (types.length === 1) {
+        return class extends Class {
+          constructor() {
+            super(resolve(types[0]));
+          }
+        };
+      }
+      return class extends Class {
+        constructor() {
+          super(...(resolve as any)(...types));
+        }
+      };
+    };
+  }
+  if (configsOrClass.length === 1 && typeof configsOrClass[0] === "function") {
+    return inject()(configsOrClass[0]);
+  }
+  return (target: any) => {
+    (attach as any)(target.prototype || target, ...configsOrClass);
+    return target;
+  };
 }
 
 export function attach<Y extends object, T0 extends Deps>(target: Y, ...configs: [DepsConfig<T0>]): Y & T0;
@@ -191,6 +221,7 @@ export function bind(...configs: any[]) {
   };
 }
 
+export function resolve(): void;
 export function resolve<T0>(...deps: [Dep<T0>]): T0;
 export function resolve<T0, T1>(...deps: [Dep<T0>, Dep<T1>]): [T0, T1];
 export function resolve<T0, T1, T2>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>]): [T0, T1, T2];
@@ -202,11 +233,17 @@ export function resolve<T0, T1, T2, T3, T4, T5, T6, T7>(...deps: [Dep<T0>, Dep<T
 export function resolve<T0, T1, T2, T3, T4, T5, T6, T7, T8>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>, Dep<T5>, Dep<T6>, Dep<T7>, Dep<T8>]): [T0, T1, T2, T3, T4, T5, T6, T7, T8];
 export function resolve<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>, Dep<T5>, Dep<T6>, Dep<T7>, Dep<T8>, Dep<T9>, ...Dep[]]): [T0, T1, T2, T3, T4, T5, T6, T7, T8, T9];
 export function resolve(...deps: any[]) {
+  if (deps.length === 0) {
+    return;
+  }
   if (deps.length > 1) {
     return deps.map((dep) => resolve(dep));
   }
   let instance;
   const dep = deps[0];
+  if (!dep) {
+    return dep;
+  }
   instance = getInstance(dep);
   if (!instance) {
     const OverrideDep = getOverride(dep);

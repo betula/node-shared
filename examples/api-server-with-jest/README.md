@@ -7,3 +7,12 @@ npm i
 npm run start
 ```
 
+For easy jest integration you need add some instruction to your `jest.config.js` file:
+
+```JavaScript
+module.exports = {
+  setupFilesAfterEnv: [
+    "node-provide/jest-cleanup-after-each"
+  ]
+}
+```

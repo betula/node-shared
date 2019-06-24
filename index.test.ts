@@ -9,6 +9,7 @@ import {
   bind,
   isolate,
   assign,
+  inject,
   reset,
   getZoneId,
   RootZoneId,
@@ -164,6 +165,17 @@ test("Should work resolve with multiple dependencies", () => {
   expect(a).toBeInstanceOf(A);
   expect(f).toBe(10);
   expect(j).toBe(J);
+  expect(resolve()).toBeUndefined();
+});
+
+test("should work resolve with plain values", () => {
+  const d = new Date();
+  const c = {};
+  expect(resolve(null)).toBe(null);
+  expect(resolve("hello")).toBe("hello");
+  expect(resolve(10)).toBe(10);
+  expect(resolve(d)).toBe(d);
+  expect(resolve(c)).toBe(c);
 });
 
 test("Should work bind", () => {
@@ -184,13 +196,13 @@ test("Should work bind", () => {
   expect(spy).toBeCalled();
 });
 
-test("Should work provide as class decorator", () => {
+test("Should work inject with dependecies for class", () => {
   const spyF = jest.fn().mockReturnValue({ v: 11 });
   const F = () => spyF();
   class A {}
   const spyM = jest.fn();
   const spyC = jest.fn();
-  const dec = provide({ a: A }, container({ f: F }));
+  const dec = inject({ a: A }, container({ f: F }));
   expect(typeof dec).toBe("function");
   class M {
     f: any;
@@ -215,6 +227,43 @@ test("Should work provide as class decorator", () => {
   c.method();
   expect(spyM).toBeCalledTimes(1);
   expect(spyF).toBeCalledTimes(1);
+});
+
+test("Should work inject with dependencies for plain objects", () => {
+  class A { a = "a"; }
+  class B { b = "b"; }
+  const dec = inject({ a: A }, container({ b: B }));
+  const c = dec({
+    c: 10,
+    getA(this: any) {
+      return this.a.a;
+    },
+  });
+  expect(c.a.a).toBe("a");
+  expect(c.b.b).toBe("b");
+  expect(c.c).toBe(10);
+  expect(c.getA()).toBe("a");
+});
+
+test("Should work inject as decorator without parameters", () => {
+  class A { a = "a"; }
+  @inject()
+  class B {
+    constructor(public a: A) {}
+  }
+  @inject
+  class C {
+    constructor(public a: A, public b: B) {}
+  }
+  @inject
+  class Z {}
+  const b = resolve(B);
+  const c = resolve(C);
+  expect(b.a).toBeInstanceOf(A);
+  expect(c.a).toBe(b.a);
+  expect(c.b).toBe(b);
+  expect(c.b.a.a).toBe("a");
+  expect(new Z).toBeInstanceOf(Z);
 });
 
 test("Should work assign", () => {
