@@ -266,6 +266,20 @@ test("Should work inject as decorator without parameters", () => {
   expect(new Z).toBeInstanceOf(Z);
 });
 
+test("Should work inject as JS style class decorator", () => {
+  const spy = jest.fn();
+  const F = () => ({ n: 10 });
+  @inject({ a: F })
+  class A {
+    constructor() {
+      expect((this as any).a.n).toBe(10);
+      spy();
+    }
+  }
+  new A();
+  expect(spy).toBeCalled();
+});
+
 test("Should work assign", () => {
   class A {}
   class B {}
