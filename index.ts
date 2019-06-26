@@ -23,7 +23,7 @@ export function getZoneId(): number {
   return zoneId;
 }
 
-export const zoneAsyncIndex: ObjectMap<number> = {};
+export const zoneIndex: ObjectMap<number> = {};
 export const zoneParentIndex: ObjectMap<number> = {};
 let hook: AsyncHook;
 
@@ -49,22 +49,23 @@ export function isolate<T = void>(callback: () => T): Promise<Proxy<T>> {
   if (typeof hook === "undefined") {
     hook = async_hooks.createHook({
       init(asyncId: number, type: any, triggerAsyncId: number) {
-        const rootAsyncId = zoneAsyncIndex[triggerAsyncId];
-        rootAsyncId && (zoneAsyncIndex[asyncId] = rootAsyncId);
+        const rootAsyncId = zoneIndex[triggerAsyncId];
+        rootAsyncId && (zoneIndex[asyncId] = rootAsyncId);
       },
       before(asyncId: number) {
-        zoneId = zoneAsyncIndex[asyncId] || RootZoneId;
+        zoneId = zoneIndex[asyncId] || RootZoneId;
       },
       destroy(asyncId: number) {
-        delete zoneAsyncIndex[asyncId];
+        delete zoneIndex[asyncId];
+        delete zoneParentIndex[asyncId];
       },
     }).enable();
   }
   return new Promise((resolve, reject) => {
     process.nextTick(async () => {
       const asyncId = async_hooks.executionAsyncId();
-      zoneParentIndex[asyncId] = zoneAsyncIndex[asyncId] || RootZoneId;
-      zoneId = zoneAsyncIndex[asyncId] = asyncId;
+      zoneParentIndex[asyncId] = zoneIndex[asyncId] || RootZoneId;
+      zoneId = zoneIndex[asyncId] = asyncId;
       try {
         resolve(proxify(await callback()));
       } catch (error) {
