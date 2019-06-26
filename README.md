@@ -5,7 +5,7 @@
 
 Async context based Dependency Injection for Node.JS without Dependency Injection Container, ServiceProvider, etc...
 
-- You can use it in any place of your application without rewrite your applications architecture or other preparations or initializations.
+- You can use it at any place of your application without rewrite your applications architecture or other preparations or initializations.
 - Each dependency can be class, function, or any another value, and plain JavaScript object of course too.
 - You can override your dependencies for organize modules architecture, or unit testing without hack standart Node.JS require mechanism.
 - You can use TypeScript or JavaScript, with decorators or not.
@@ -22,7 +22,7 @@ npm install node-provide
 
 TypeScript with decorators and reflect metadata
 
-```TypeScript
+```typescript
 import { provide, inject } from "node-provide";
 // ...
 
@@ -60,7 +60,7 @@ new App().start(); // You can create instance directly as usually class
 
 JavaScript with decorators
 
-```JavaScript
+```javascript
 import { provide, inject } from "node-provide";
 // ...
 
@@ -103,7 +103,7 @@ new App().start(); // You can create instance directly as usually class
 
 Pure JavaScript without decorators
 
-```JavaScript
+```javascript
 const { inject, attach, container } = require("node-provide");
 // ...
 
@@ -145,7 +145,14 @@ module.exports = class App {
   }
 }
 
-// or using inject decorator
+// or using inject decorator with inject to constructor
+class App {
+  constructor(db, server, accountRouter) { /* ... */ }
+  // ...
+}
+module.exports = inject([Db, Server, AccountRouter])(App);
+
+// or using inject decorator with inject to `this`
 class App {
   start() {
     this.db.init();
@@ -163,7 +170,7 @@ new App().start(); // You can create instance directly as usually class
 
 If you use modules architecture of your application you can override you dependencies.
 
-```TypeScript
+```typescript
 import { override, inject } from "node-provide";
 
 class A {
@@ -195,7 +202,7 @@ new B(); // "Hello A2!"
 
 You can use `override` or `assign` for provide mocks in you dependencies.
 
-```TypeScript
+```typescript
 import { override, inject } from "node-provide";
 
 // world.ts
@@ -225,7 +232,7 @@ it("It works!", () => {
 ```
 
 If you use `Jest` for unit testing you need add some code to your `jest.config.js` file.
-```JavaScript
+```javascript
 // jest.config.js
 {
   // ...
@@ -240,7 +247,7 @@ This code means that after each test cached dependency instances will be clear.
 
 If you want more then one instance of your application with different configuration on with different overrides of dependencies, you can use `isolate`. It works using async context for separate of Dependency Injection scopes. Node.JS async hook will created only after first call of `isolate`.
 
-```TypeScript
+```typescript
 class A {
   private counter: number = 0;
   inc() {
@@ -271,7 +278,7 @@ await b2Proxy.incAndPrint(); // Counter 1
 
 In each of `isolate` section you can define any overrides, scopes can be nested with inherits overrides.
 
-```JavaScript
+```javascript
 // config.json
 {
   "text": "Hello!"
@@ -314,7 +321,7 @@ Returns instance of you dependency, or list of instances for dependencies. Each 
 - For function. Function will be called and result cached
 - For any value. Return it value without any changes
 
-```JavaScript
+```javascript
 const depInstance = resolve(Dep);
 const [ dep1, dep2, ... ] = resolve(Dep1, Dep2, ...);
 ```
@@ -323,8 +330,8 @@ const [ dep1, dep2, ... ] = resolve(Dep1, Dep2, ...);
 
 Returns plain object with instantiated values. Each argument can be object of dependencies or result of previous `container` call. Result will be merged.
 
-```JavaScript
-const cont1 = container({ dep1: Dep1, dep2: Dep2 }, { dep3, Dep3 }, ...);
+```javascript
+const cont1 = container({ dep1: Dep1, dep2: Dep2, ... }, { dep3, Dep3 }, ...);
 const cont2 = container({ dep4: Dep4 }, cont1, { dep5: Dep5 }, container({ dep6: Dep6 }, ...), ...);
 const { dep1, dep2, dep3, dep4, dep5, dep6, ... } = cont2;
 ```
@@ -333,14 +340,56 @@ const { dep1, dep2, dep3, dep4, dep5, dep6, ... } = cont2;
 
 Decorator for provide dependecies into object or class. If it run without arguments it use reflect metadata for determine list of dependencies from class constructor parameters.
 
-```TypeScript
+```typescript
 @inject // or @inject() its same
-class {
+class A {
   constructor(public dep1: Dep1, public dep2: Dep2, ...) {}
+}
+const a = new (A as new () => A); // Important: TypeScript cannot understanding that constructor signature was changed after use `inject` decorator
+```
+
+If it run with array of dependency it works same, but without reflect metadata
+
+```javascript
+@inject([Dep1, Dep2, Dep3, ...])
+class {
+  constructor(dep1, dep2, dep3, ...) {}
 }
 ```
 
+Or signature of this method same as `container` sugnature, but return decorator function with inject all dependency instances to `prototype` if its class or to `this` if its plain object
+
+```javascript
+const decorator = @inject({ dep1: Dep1 }, container({ dep2, Dep2 }), ...);
+const Class = decorator(class {
+  anyMethodOrConstructor() {
+    const { dep1, dep2 } = this;
+  }
+});
+const obj = decorator({
+  anyMethod() {
+    const { dep1, dep2 } = this;
+  }
+});
+```
+
 **provide**
+
+Property decorator for provide instance of dependency to class property, had two overrided signatures. One of them without parameter used reflect metadata for take dependency, next one use dependency from parameter.
+
+```typescript
+class {
+  @provide dep1: Dep1;
+  @provide(Dep2): dep2;
+}
+```
+
+In TypeScript exists problem that it doesnt undestend that property from non initialized has been transformed to getter. You can disable `strictPropertyInitialization` in your `tsconfig.json` or using with exclamation mark.
+
+```typescript
+class {
+  @provide dep1!: Dep1;
+}
 
 **attach**
 
