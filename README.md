@@ -6,11 +6,11 @@
 Minimalistic Dependency Injection for Node.JS
 
 - You can use it in any place of your application without rewrite your applications architecture or other preparations or initializations.
-- Each dependency can be class, function, or any another value, and plain JavaScript object of cource too.
-- You can override your dependencies for organize modules architecture, or unit testing without replace standart Node.JS require mechanism.
+- Each dependency can be class, function, or any another value, and plain JavaScript object of course too.
+- You can override your dependencies for organize modules architecture, or unit testing without hack standart Node.JS require mechanism.
 - You can use TypeScript or JavaScript, with decorators or not.
 - Defferent syntaxies for one mechanism. You can use constructor for provide dependencies or not, as you wish.
-- You can create isolate context for multiple instances of you application with different set of depenencies, overrides and instances.
+- You can create isolate context for multiple instances of you application (Dependency Injection scopes) with different set of depenencies, overrides and instances.
 
 ## Install
 
@@ -262,7 +262,7 @@ await b1Proxy.incAndPrint(); // Counter 2
 await b2Proxy.incAndPrint(); // Counter 1
 ```
 
-In each of `isolate` section you can define any overrides, scopes can be nested with inheris overrides.
+In each of `isolate` section you can define any overrides, scopes can be nested with inherits overrides.
 
 ```JavaScript
 // config.json
@@ -300,13 +300,40 @@ class Hello {
 
 ## API Reference
 
-**inject**
-
-**provide**
-
 **resolve**
 
+Returns instance of you dependency, or list of instances for dependencies. Each dependency can be class, function or any value.
+- For class. Class will be instantiated onces and cached
+- For function. Function will be called and result cached
+- For any value. Return it value without any changes
+
+```JavaScript
+const depInstance = resolve(Dep);
+const [ dep1, dep2, ... ] = resolve(Dep1, Dep2, ...);
+```
+
 **container**
+
+Returns plain object with instantiated values. Each argument can be object of dependencies or result of previous `container` call. Result will be merged.
+
+```JavaScript
+const cont1 = container({ dep1: Dep1, dep2: Dep2 }, { dep3, Dep3 }, ...);
+const cont2 = container({ dep4: Dep4 }, cont1, { dep5: Dep5 }, container({ dep6: Dep6 }, ...), ...);
+const { dep1, dep2, dep3, dep4, dep5, dep6 } = cont2;
+```
+
+**inject**
+
+Decorator for provide dependecies into object or class. If it run without arguments it use reflect metadata for determine list of dependencies from class constructor parameters.
+
+```TypeScript
+@inject // or @inject() its same
+class {
+  constructor(public dep1: Dep1, public dep2: Dep2, ...) {}
+}
+```
+
+**provide**
 
 **attach**
 
