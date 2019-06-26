@@ -3,10 +3,10 @@
 [![Build Status](https://travis-ci.org/betula/node-provide.svg?branch=master)](https://travis-ci.org/betula/node-provide)
 [![Coverage Status](https://coveralls.io/repos/github/betula/node-provide/badge.svg?branch=master)](https://coveralls.io/github/betula/node-provide?branch=master)
 
-Async context based Dependency Injection for Node.JS without Dependency Injection Container, ServiceProvider, etc...
+Async context based Dependency Injection for Node.JS without pain with Dependency Injection Container and dependency registration.
 
 - You can use it at any place of your application without rewrite your applications architecture or other preparations or initializations.
-- Each dependency can be class, function, or any another value, and plain JavaScript object of course too.
+- Each dependency can be class, function, or any another value, and plain JavaScript object too.
 - You can override your dependencies for organize modules architecture, or unit testing without hack standart Node.JS require mechanism.
 - You can use TypeScript or JavaScript, with decorators or not.
 - Defferent syntaxies for one mechanism. You can use constructor for provide dependencies or not, as you wish.
@@ -174,8 +174,7 @@ class A {
 @inject
 class B {
   constructor(private a: A) {
-    // After `override(A, A2)` property
-    // `this.a` will be instance of A2, but not A
+    // After `override(A, A2)` property `this.a` will be instance of A2, but not A
     this.a.send();
   }
 }
@@ -250,7 +249,7 @@ after(reset);
 
 ## Isolate Dependency Injection context
 
-If you want more then one instance of your application with different configuration on with different overrides of dependencies, you can use `isolate`. It works using async context for separate of Dependency Injection scopes. Node.JS async hook will created only after first call of `isolate`.
+If you want more then one instance of your application with different configuration or with different overrides of dependencies, you can use `isolate`. It works using async context for separate Dependency Injection scopes. Node.JS async hook will created only once after first call of `isolate`.
 
 ```typescript
 import { isolate, provide } from "node-provide";
@@ -283,7 +282,7 @@ await b1Proxy.incAndPrint(); // Counter 2
 await b2Proxy.incAndPrint(); // Counter 1
 ```
 
-In each of `isolate` section you can define any overrides, scopes can be nested with inherits overrides.
+In each of `isolate` section you can define any overrides, scopes can be nested with inherit overrides.
 
 ```javascript
 // config.json
@@ -348,7 +347,7 @@ const { dep1, dep2, dep3, dep4, dep5, dep6, ... } = cont2;
 
 **inject**
 
-Decorator for provide dependecies into object or class. If it run without arguments it use reflect metadata for determine list of dependencies from class constructor parameters.
+Decorator for provide dependecies into object or class. If it run without arguments it use reflect metadata for determine list of dependencies from class constructor parameters. For TypeScript your need enable `experimentalDecorators` and `emitDecoratorMetadata` options in your `tsconfig.json`.
 
 ```typescript
 @inject // or @inject() its same
@@ -371,7 +370,7 @@ class {
 }
 ```
 
-Or signature of this method same as `container` sugnature, but return decorator function with inject all dependency instances to `prototype` if its class or to `this` if its plain object
+Or exists signature of this method same as `container`, but return decorator function with inject all dependency instances into `prototype` if its class, or into `this` if its plain object
 
 ```javascript
 const decorator = @inject({ dep1: Dep1 }, container({ dep2, Dep2 }), ...);
@@ -412,14 +411,26 @@ class {
 
 **bind**
 
+
 **override**
+
 
 **assign**
 
+
 **isolate**
+
 
 **reset**
 
+Clean all cached dependency instances and overrides. Its needed for testing. Has no parameters.
+
+```javascript
+// ...
+after(reset);
+// ...
+```
+
 ---
 
-If you have questions or something else for me or this project, maybe architectures questions, improvement ideas or anything else, please make issues.
+If you have questions or something else for me or this project, maybe architectures questions, improvement ideas or anything else, please make issue.
