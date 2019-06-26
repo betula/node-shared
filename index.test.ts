@@ -266,17 +266,33 @@ test("Should work inject as decorator without parameters", () => {
   expect(new Z).toBeInstanceOf(Z);
 });
 
-test("Should work inject as JS style class decorator", () => {
+test("Should work inject with dependencies configs in arguments", () => {
   const spy = jest.fn();
   const F = () => ({ n: 10 });
-  @inject({ a: F })
+  @inject({ f: F })
   class A {
     constructor() {
-      expect((this as any).a.n).toBe(10);
+      expect((this as any).f.n).toBe(10);
       spy();
     }
   }
   new A();
+  expect(spy).toBeCalled();
+});
+
+test("Should woth inject with array of dependencies in argument", () => {
+  const spy = jest.fn();
+  class A { s = "s"; }
+  const F = () => ({ n: 10 });
+  @inject([A, F])
+  class B {
+    constructor(a: any, f: any) {
+      expect(a.s).toBe("s");
+      expect(f.n).toBe(10);
+      spy();
+    }
+  }
+  new (B as any)();
   expect(spy).toBeCalled();
 });
 

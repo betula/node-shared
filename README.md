@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/betula/node-provide.svg?branch=master)](https://travis-ci.org/betula/node-provide)
 [![Coverage Status](https://coveralls.io/repos/github/betula/node-provide/badge.svg?branch=master)](https://coveralls.io/github/betula/node-provide?branch=master)
 
-Minimalistic Dependency Injection for Node.JS
+Async context based Dependency Injection for Node.JS without Dependency Injection Container, ServiceProvider, etc...
 
 - You can use it in any place of your application without rewrite your applications architecture or other preparations or initializations.
 - Each dependency can be class, function, or any another value, and plain JavaScript object of course too.
@@ -76,7 +76,14 @@ export default class App {
   }
 }
 
-// or using @inject decorator
+// or using @inject decorator with inject to constructor
+@inject([Db, Server, AccountRouter])
+export default class App {
+  constructor(db, server, accountRouter) { /* ... */ }
+  // ...
+}
+
+// or using @inject decorator with inject to `this`
 @inject({
   db: Db,
   server: Server,
@@ -231,7 +238,7 @@ This code means that after each test cached dependency instances will be clear.
 
 ## Isolate Dependency Injection context
 
-If you want more then one instance of your application with different configuration on with different overrides of dependencies, you can use `isolate`. It works using async context for separate of Dependency Injection scopes.
+If you want more then one instance of your application with different configuration on with different overrides of dependencies, you can use `isolate`. It works using async context for separate of Dependency Injection scopes. Node.JS async hook will created only after first call of `isolate`.
 
 ```TypeScript
 class A {
@@ -319,7 +326,7 @@ Returns plain object with instantiated values. Each argument can be object of de
 ```JavaScript
 const cont1 = container({ dep1: Dep1, dep2: Dep2 }, { dep3, Dep3 }, ...);
 const cont2 = container({ dep4: Dep4 }, cont1, { dep5: Dep5 }, container({ dep6: Dep6 }, ...), ...);
-const { dep1, dep2, dep3, dep4, dep5, dep6 } = cont2;
+const { dep1, dep2, dep3, dep4, dep5, dep6, ... } = cont2;
 ```
 
 **inject**

@@ -143,37 +143,31 @@ type InjectDecRetFn<T> = <P>(target: P) =>
 
 export function inject(): <T extends any>(target: ClassType<T>) => ClassType<T, []>;
 export function inject<T extends ClassType>(Class: T): T extends ClassType<infer U> ? ClassType<U, []> : never;
+export function inject<T extends Dep[]>(Deps: T): <T extends any>(target: ClassType<T>) => ClassType<T, []>;
 export function inject<T0 extends Deps>(...configs: [DepsConfig<T0>]): InjectDecRetFn<T0>;
 export function inject<T0 extends Deps, T1 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>]): InjectDecRetFn<T0 & T1>;
 export function inject<T0 extends Deps, T1 extends Deps, T2 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>]): InjectDecRetFn<T0 & T1 & T2>;
 export function inject<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>]): InjectDecRetFn<T0 & T1 & T2 & T3>;
 export function inject<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps, T4 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>, DepsConfig<T4>, ...MoreDepsConfig[]]): InjectDecRetFn<T0 & T1 & T2 & T3 & T4>;
-export function inject(...configsOrClass: any[]) {
-  if (configsOrClass.length === 0) {
+export function inject(...configsOrClassOrDeps: any[]) {
+  if (configsOrClassOrDeps.length === 0) {
     return (Class: any) => {
-      const types = Reflect.getMetadata("design:paramtypes", Class);
-      if (!types || types.length === 0) {
-        return Class;
-      }
-      if (types.length === 1) {
-        return class extends Class {
-          constructor() {
-            super(resolve(types[0]));
-          }
-        };
-      }
-      return class extends Class {
-        constructor() {
-          super(...(resolve as any)(...types));
-        }
-      };
+      return createInjectDecoratedClass(Reflect.getMetadata("design:paramtypes", Class), Class);
     };
   }
-  if (configsOrClass.length === 1 && typeof configsOrClass[0] === "function") {
-    return inject()(configsOrClass[0]);
+  if (configsOrClassOrDeps.length === 1) {
+    const classOrDeps = configsOrClassOrDeps[0];
+    if (typeof classOrDeps === "function") {
+      return inject()(classOrDeps);
+    }
+    if (Array.isArray(classOrDeps)) {
+      return (Class: any) => {
+        return createInjectDecoratedClass(classOrDeps, Class);
+      };
+    }
   }
   return (target: any) => {
-    (attach as any)(target.prototype || target, ...configsOrClass);
+    (attach as any)(target.prototype || target, ...configsOrClassOrDeps);
     return target;
   };
 }
@@ -414,6 +408,24 @@ function createProvideDescriptor(dep: Dep, propertyKey: PropertyKey) {
     },
     enumerable: true,
     configurable: true,
+  };
+}
+
+function createInjectDecoratedClass(deps: Deps[], Class: ClassType) {
+  if (!deps || deps.length === 0) {
+    return Class;
+  }
+  if (deps.length === 1) {
+    return class extends Class {
+      constructor() {
+        super(resolve(deps[0]));
+      }
+    };
+  }
+  return class extends Class {
+    constructor() {
+      super(...(resolve as any)(...deps));
+    }
   };
 }
 
