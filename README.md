@@ -28,14 +28,12 @@ import { provide, inject } from "node-provide";
 
 class Db { /* ... */ }
 class Server { /* ... */ }
-class AccountRouter { /* ... */ }
 // ...
 
 // Inject dependencies using @provide decorator and class properties
 export default class App {
   @provide db: Db;
   @provide server: Server;
-  @provide accountRouter: AccountRouter;
   // ...
   start() {
     this.db.init();
@@ -49,7 +47,6 @@ export default class App {
   constructor(
     public db: Db,
     public server: Server,
-    public accountRouter: AccountRouter,
   ) { /* ... */ }
   // ...
 }
@@ -68,7 +65,6 @@ import { provide, inject } from "node-provide";
 export default class App {
   @provide(Db) db;
   @provide(Server) server;
-  @provide(AccountRouter) accountRouter;
   // ...
   start() {
     this.db.init();
@@ -77,9 +73,9 @@ export default class App {
 }
 
 // or using @inject decorator with inject to constructor
-@inject([Db, Server, AccountRouter])
+@inject([Db, Server])
 export default class App {
-  constructor(db, server, accountRouter) { /* ... */ }
+  constructor(db, server) { /* ... */ }
   // ...
 }
 
@@ -87,7 +83,6 @@ export default class App {
 @inject({
   db: Db,
   server: Server,
-  accountRouter: AccountRouter,
 })
 export default class App {
   start() {
@@ -109,13 +104,11 @@ const { inject, attach, container } = require("node-provide");
 
 const Db = require("./db");
 const Server = require("./server");
-const AccountRouter = require("./account-router");
 // ...
 
 const services = container({
   db: Db,
   server: Server,
-  accountRouter: AccountRouter,
 });
 
 // Using in function
@@ -135,7 +128,6 @@ module.exports = class App {
     attach(this, {
       db: Db,
       server: Server,
-      accountRouter: AccountRouter,
     });
   }
   // ...
@@ -147,10 +139,10 @@ module.exports = class App {
 
 // or using inject decorator with inject to constructor
 class App {
-  constructor(db, server, accountRouter) { /* ... */ }
+  constructor(db, server) { /* ... */ }
   // ...
 }
-module.exports = inject([Db, Server, AccountRouter])(App);
+module.exports = inject([Db, Server])(App);
 
 // or using inject decorator with inject to `this`
 class App {
@@ -203,24 +195,29 @@ new B(); // "Hello A2!"
 You can use `override` or `assign` for provide mocks in you dependencies.
 
 ```typescript
-import { override, inject } from "node-provide";
-
 // world.ts
-class World {
+export class World {
   hello() {
     // ...
   }
 }
 
 // hello.ts
+import { inject } from "node-provide";
+
 @inject
-class Hello {
+export class Hello {
   constructor(world: World) {
     this.world.hello();
   }
 }
 
 // hello.test.ts
+import { assign } from "node-provide";
+import { World } from "./world";
+import { Hello } from "./hello";
+// ...
+
 it("It works!", () => {
   const worldMock = {
     hello: jest.fn(),
@@ -232,6 +229,7 @@ it("It works!", () => {
 ```
 
 If you use `Jest` for unit testing you need add some code to your `jest.config.js` file.
+
 ```javascript
 // jest.config.js
 {
@@ -241,13 +239,22 @@ If you use `Jest` for unit testing you need add some code to your `jest.config.j
 }
 ```
 
-This code means that after each test cached dependency instances will be clear.
+This code means that after each test cached dependency instances will be clear. For another testing frameworks you need call `reset` after each test case manually for cleanup cached instances of dependencies;
+
+```javascript
+const { reset } = require("node-provide");
+// ...
+after(reset);
+// ...
+```
 
 ## Isolate Dependency Injection context
 
 If you want more then one instance of your application with different configuration on with different overrides of dependencies, you can use `isolate`. It works using async context for separate of Dependency Injection scopes. Node.JS async hook will created only after first call of `isolate`.
 
 ```typescript
+import { isolate, provide } from "node-provide";
+
 class A {
   private counter: number = 0;
   inc() {
@@ -302,6 +309,9 @@ class Hello {
 }
 
 // index.js
+const { isolate, override } = require("node-provide");
+// ...
+
 (async () => {
   const hello1Proxy = await isolate(() => {
     override(config, config2); // Override `config` dependency to `config2` only for this scope
@@ -345,8 +355,9 @@ Decorator for provide dependecies into object or class. If it run without argume
 class A {
   constructor(public dep1: Dep1, public dep2: Dep2, ...) {}
 }
-const a = new (A as new () => A); // Important: TypeScript cannot understanding that constructor signature was changed after use `inject` decorator
+const a = new (A as new () => A); // Important: TypeScript can't understanding that constructor signature was changed after use `inject` decorator
 // ...
+
 // Or if A is dependency too you can use `resolve` for get instance of it
 const a = resolve(A);
 ```
