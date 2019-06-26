@@ -1,7 +1,7 @@
 {
   "name": "node-provide",
-  "version": "0.2.0",
-  "description": "Simple dependency provider for node",
+  "version": "0.2.1",
+  "description": "Minimalistic Dependency Injection for Node.JS",
   "repository": {
     "url": "https://github.com/betula/node-provide"
   },
@@ -20,6 +20,7 @@
     "dependency provider",
     "provide",
     "injection",
+    "inject",
     "node"
   ],
   "author": "Viacheslav Bereza <mail@betula.co>",
