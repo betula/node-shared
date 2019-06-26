@@ -180,7 +180,7 @@ class A2 {
   }
 }
 
-override(A, A2); // After then A and A2 dependencies will use only one instance of A2
+override(A, A2); // After that A and A2 dependencies will use only one instance of A2
 new B(); // "Hello A2!"
 ```
 
@@ -229,6 +229,74 @@ If you use `Jest` for unit testing you need add some code to your `jest.config.j
 
 This code means that after each test cached dependency instances will be clear.
 
+## Isolate Dependency Injection context
+
+If you want more then one instance of your application with different configuration on with different overrides of dependencies, you can use `isolate`. It works using async context for separate of Dependency Injection scopes.
+
+```TypeScript
+class A {
+  private counter: number = 0;
+  inc() {
+    this.counter += 1;
+  }
+  print() {
+    console.log(`Counter ${this.counter}`);
+  }
+}
+
+class B {
+  @provide a: A
+  incAndPrint() {
+    a.inc();
+    a.print();
+  }
+}
+
+// Each section of `isolate` use different dependency injection scopes and different instances of your dependencies
+const b1Proxy = await isolate(() => new B);
+const b2Proxy = await isolate(() => new B);
+
+// Retured object from `isolate` had some methods and properties signature but each return value wrapped to Promise
+await b1Proxy.incAndPrint(); // Counter 1
+await b1Proxy.incAndPrint(); // Counter 2
+await b2Proxy.incAndPrint(); // Counter 1
+```
+
+In each of `isolate` section you can define any overrides, scopes can be nested with inheris overrides.
+
+```JavaScript
+// config.json
+{
+  "text": "Hello!"
+}
+
+// config2.json
+{
+  "text": "Hello 2!"
+}
+
+// hello.js
+const config = require("./config");
+
+class Hello {
+  constructor() {
+    assign(this, { config });
+  }
+  echo() {
+    console.log(this.config.text);
+  }
+}
+
+// index.js
+(async () => {
+  const hello1Proxy = await isolate(() => {
+    override(config, config2); // Override `config` dependency to `config2` only for this scope
+    return new Hello();
+  })
+  await hello1Proxy.echo(); // "Hello 2!";
+  new Hello().echo(); // "Hello!"
+})();
+```
 
 ## API Reference
 
@@ -251,7 +319,6 @@ This code means that after each test cached dependency instances will be clear.
 **isolate**
 
 **reset**
-
 
 ---
 
