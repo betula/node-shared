@@ -23,8 +23,8 @@ export function getZoneId(): number {
   return zoneId;
 }
 
-const zoneAsyncIndex: ObjectMap<number> = {};
-const zoneParentIndex: ObjectMap<number> = {};
+export const zoneAsyncIndex: ObjectMap<number> = {};
+export const zoneParentIndex: ObjectMap<number> = {};
 let hook: AsyncHook;
 
 type ProxyFunction<T> = T extends (...args: infer A) => infer R
@@ -55,7 +55,6 @@ export function isolate<T = void>(callback: () => T): Promise<Proxy<T>> {
       before(asyncId: number) {
         zoneId = zoneAsyncIndex[asyncId] || RootZoneId;
       },
-      /* istanbul ignore next */
       destroy(asyncId: number) {
         delete zoneAsyncIndex[asyncId];
       },

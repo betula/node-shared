@@ -13,6 +13,7 @@ import {
   reset,
   getZoneId,
   RootZoneId,
+  zoneAsyncIndex,
 } from "./index";
 
 afterEach(reset);
@@ -412,6 +413,13 @@ test("Should work getting current zone id", async () => {
   const z2 = await isolate(getZoneId);
   expect(z2).not.toBe(RootZoneId);
   expect(z2).not.toBe(z1);
+});
+
+test("Should destroy async context in isolate", async () => {
+  const id = await isolate(getZoneId);
+  expect(zoneAsyncIndex[id]).toBe(id);
+  await new Promise(setTimeout as any);
+  expect(zoneAsyncIndex[id]).toBeUndefined();
 });
 
 test("Should throw error when circular dependency detected", () => {

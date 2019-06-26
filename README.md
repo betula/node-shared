@@ -316,7 +316,7 @@ class Hello {
 
 **resolve**
 
-Returns instance of you dependency, or list of instances for dependencies. Each dependency can be class, function or any value.
+Returns instance of you dependency, or list of instances for array of dependencies. Each dependency can be class, function or any value.
 - For class. Class will be instantiated onces and cached
 - For function. Function will be called and result cached
 - For any value. Return it value without any changes
@@ -346,6 +346,9 @@ class A {
   constructor(public dep1: Dep1, public dep2: Dep2, ...) {}
 }
 const a = new (A as new () => A); // Important: TypeScript cannot understanding that constructor signature was changed after use `inject` decorator
+// ...
+// Or if A is dependency too you can use `resolve` for get instance of it
+const a = resolve(A);
 ```
 
 If it run with array of dependency it works same, but without reflect metadata
@@ -384,14 +387,17 @@ class {
 }
 ```
 
-In TypeScript exists problem that it doesnt undestend that property from non initialized has been transformed to getter. You can disable `strictPropertyInitialization` in your `tsconfig.json` or using with exclamation mark.
+In TypeScript exists problem that it doesn't undestend that property from non initialized has been transformed to getter. You can disable `strictPropertyInitialization` in your `tsconfig.json` or using with exclamation mark.
 
 ```typescript
 class {
   @provide dep1!: Dep1;
 }
+```
 
 **attach**
+
+
 
 **bind**
 
