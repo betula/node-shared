@@ -53,6 +53,9 @@ export default class App {
   ) { /* ... */ }
   // ...
 }
+
+// index.ts
+new App().start(); // You can create instance directly as usually class
 ```
 
 JavaScript with decorators
@@ -86,6 +89,9 @@ export default class App {
   }
   // ...
 }
+
+// index.js
+new App().start(); // You can create instance directly as usually class
 ```
 
 Pure JavaScript without decorators
@@ -141,9 +147,87 @@ class App {
   // ...
 }
 module.exports = inject(services)(App);
+
+// index.js
+new App().start(); // You can create instance directly as usually class
+```
+
+## Override dependencies
+
+If you use modules architecture of your application you can override you dependencies.
+
+```TypeScript
+import { override, inject } from "node-provide";
+
+class A {
+  send() {
+    console.log("Hello A!");
+  }
+}
+
+@inject
+class B {
+  constructor(private a: A) {
+    // After `override(A, A2)` property
+    // `this.a` will be instance of A2, but not A
+    this.a.send();
+  }
+}
+
+class A2 {
+  send() {
+    console.log("Hello A2!");
+  }
+}
+
+override(A, A2); // After then A and A2 dependencies will use only one instance of A2
+new B(); // "Hello A2!"
 ```
 
 ## Unit testing
+
+You can use `override` or `assign` for provide mocks in you dependencies.
+
+```TypeScript
+import { override, inject } from "node-provide";
+
+// world.ts
+class World {
+  hello() {
+    // ...
+  }
+}
+
+// hello.ts
+@inject
+class Hello {
+  constructor(world: World) {
+    this.world.hello();
+  }
+}
+
+// hello.test.ts
+it("It works!", () => {
+  const worldMock = {
+    hello: jest.fn(),
+  }
+  assign(World, worldMock);
+  new Hello();
+  expect(worldMock.start).toBeCalled();
+})
+```
+
+If you use `Jest` for unit testing you need add some code to your `jest.config.js` file.
+```JavaScript
+// jest.config.js
+{
+  // ...
+  setupFilesAfterEnv: [ "node-provide/jest-cleanup-after-each" ],
+  // ...
+}
+```
+
+This code means that after each test cached dependency instances will be clear.
 
 
 ## API Reference
@@ -165,6 +249,8 @@ module.exports = inject(services)(App);
 **assign**
 
 **isolate**
+
+**reset**
 
 
 ---
