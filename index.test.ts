@@ -316,10 +316,13 @@ test("Should work assign", () => {
   class B {}
   class C {}
   class D {}
+  class E {}
   const j = {};
   override(A, B);
   assign(A, j);
   assign([C, { v: "C" }], [D, { v: "D" }]);
+  assign(E, 10);
+  expect(resolve(E)).toBe(10);
   const [a, b, c, d] = resolve(A, B, C, D);
   expect(a).toBe(j);
   expect(b).toBe(j);

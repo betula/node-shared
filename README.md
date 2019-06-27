@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/betula/node-provide.svg?branch=master)](https://travis-ci.org/betula/node-provide)
 [![Coverage Status](https://coveralls.io/repos/github/betula/node-provide/badge.svg?branch=master)](https://coveralls.io/github/betula/node-provide?branch=master)
 
-Async context based Dependency Injection for Node.JS without pain with Dependency Injection Container and dependency registration.
+Async context based Dependency Injection for Node.JS without pain with Dependency Injection Container, dependency registration, and configuration.
 
 - You can use it at any place of your application without rewrite your applications architecture or other preparations or initializations.
 - Each dependency can be class, function, or any another value, and plain JavaScript object too.
@@ -409,18 +409,87 @@ class {
 
 **attach**
 
+Provide instances of dependencies into object. Signature of function same as container.
 
+```javascript
+const m = {};
+const m2 = attach(m, { dep1: Dep1, ...}, container({ dep2: Dep2, ...}, ...), ...);
+console.log(m === m2); // true
+const dep1 = m.dep1;
+const dep2 = m.dep2;
+```
 
 **bind**
 
+Function decorator for provide container as first parameter in decorated function. Signature of function same as container.
+
+```javascript
+const decorator = bind({ dep1: Dep1, ...}, container({ dep2: Dep2, ...}), ...);
+const fn = decorator((cont, x, y) => {
+  const dep1 = cont.dep1;
+  const dep2 = cont.dep2;
+  // ...
+});
+fn(x, y);
+```
 
 **override**
 
+Override dependency.
+
+```javascript
+override(FromDep, ToDep);
+// ...
+console.log(resolve(FromDep) === resolve(ToDep)); // true
+```
 
 **assign**
 
+Define any value as resolved value for any dependency.
+
+```javascript
+assign(Dep, value);
+// ...
+class A {}
+assign(A, 10);
+console.log(resolve(A)); // 10
+```
 
 **isolate**
+
+Run you app in isolated Dependency Injection scope. All instances cached for this instance application will be isolated from all cached instances in another scopes. All overrides defined here will be inherit for nested isolated scopes but not available for other. Return value can be object, function, or any other value:
+- For object. All methods will be proxied and theirs return value converted to promises of them
+- For function. Function will be proxied and it return value converted to promise of it.
+- For any value. Return it value without any changes
+
+```javascript
+const proxy = await isolate(() => {
+  const app = new App(); // Run you app here
+  // ...
+  return {
+    methodA() {},
+    methodB() {},
+    // ...
+  }
+});
+// ...
+await proxy.methodA();
+await proxy.methodB();
+```
+
+```javascript
+await isolate(async () => {
+  override(Dep1, Dep2);
+
+  await isolate(async () => {
+    override(Dep2, Dep3);
+    // ...
+    console.log(resolve(Dep1) instanceof Dep3); // true
+  });
+  // ...
+  console.log(resolve(Dep1) instanceof Dep2); // true
+})
+```
 
 **cleanup**
 
