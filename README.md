@@ -225,7 +225,7 @@ it("It works!", () => {
   }
   assign(World, worldMock);
   new Hello();
-  expect(worldMock.start).toBeCalled();
+  expect(worldMock.hello).toBeCalled();
 })
 ```
 
