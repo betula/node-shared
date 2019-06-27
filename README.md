@@ -191,7 +191,7 @@ new B(); // "Hello A2!"
 
 ## Unit testing
 
-You can use `override` or `assign` for provide mocks in you dependencies.
+You can use `assign` for provide mocks into you dependencies.
 
 ```typescript
 // world.ts
@@ -212,10 +212,12 @@ export class Hello {
 }
 
 // hello.test.ts
-import { assign } from "node-provide";
+import { assign, cleanup } from "node-provide";
 import { World } from "./world";
 import { Hello } from "./hello";
 // ...
+
+after(cleanup);
 
 it("It works!", () => {
   const worldMock = {
@@ -420,15 +422,22 @@ class {
 
 **isolate**
 
+**cleanup**
 
-**reset**
-
-Clean all cached dependency instances and overrides. Its needed for testing. Has no parameters.
+Clean all cached dependency instances. Its needed for testing. Has no parameters.
 
 ```javascript
 // ...
-after(reset);
+after(cleanup);
 // ...
+```
+
+**reset**
+
+Clean all cached dependency instances and overrides. Has no parameters.
+
+```javascript
+reset()
 ```
 
 ---

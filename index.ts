@@ -288,18 +288,22 @@ export function assign(...depOrDepInstPairs: any[]) {
   }
 }
 
-export function reset() {
+export function cleanup() {
   Object.keys(instances).forEach((id) => {
     instances[id].clear();
     delete instances[id];
   });
-  Object.keys(overrides).forEach((id) => {
-    overrides[id].clear();
-    delete overrides[id];
-  });
   Object.keys(resolvePhases).forEach((id) => {
     resolvePhases[id].clear();
     delete resolvePhases[id];
+  });
+}
+
+export function reset() {
+  cleanup();
+  Object.keys(overrides).forEach((id) => {
+    overrides[id].clear();
+    delete overrides[id];
   });
 }
 

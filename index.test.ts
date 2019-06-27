@@ -11,6 +11,7 @@ import {
   assign,
   inject,
   reset,
+  cleanup,
   getZoneId,
   RootZoneId,
   zoneIndex,
@@ -99,6 +100,18 @@ test("Should cache override", () => {
   expect(resolve(B).a).toBeInstanceOf(A3);
   expect(instances[RootZoneId].get(A)).toBeInstanceOf(A3);
   expect(instances[RootZoneId].get(A2)).toBeInstanceOf(A3);
+});
+
+test("Should work cleanup", () => {
+  class A {}
+  class B {}
+  const m = {};
+  expect(resolve(A)).toBeInstanceOf(A);
+  assign(B, m);
+  expect(resolve(B)).toBe(m);
+  expect(instances[RootZoneId].size).toBe(2);
+  cleanup();
+  expect(instances[RootZoneId]).toBeUndefined();
 });
 
 test("Should work reset", () => {

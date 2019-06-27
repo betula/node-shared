@@ -1,1 +1,1 @@
-afterEach(require(".").reset);
+afterEach(require(".").cleanup);
