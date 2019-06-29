@@ -10,9 +10,9 @@
   "scripts": {
     "build": "npx tsc",
     "test": "npx jest --coverage",
-    "coveralls": "npx jest --coverage && cat ./coverage/lcov.info | coveralls",
+    "test-with-coveralls": "npx jest --coverage && cat ./coverage/lcov.info | coveralls",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
-    "prepare": "npm run tslint && npm run test && npm run build"
+    "prepare": "npm run tslint && npm run build && npm run test"
   },
   "keywords": [
     "di",

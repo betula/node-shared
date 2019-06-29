@@ -1,35 +1,41 @@
 sudo: false
 language: node_js
 node_js:
+- 8
+- 10
 - 12
 branches:
   only:
   - master
 cache:
   yarn: true
-  directories:
-  - node_modules
-before_install:
-- npm update
+  npm: true
 install:
 - npm install
 script:
-- npm test
 - npm run tslint
 - npm run build
-- npm run coveralls
-- git config --global user.name "${GH_NAME}"
-- git config --global user.email "${GH_EMAIL}"
-- echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
-- cd website && yarn install && GIT_USER="${GH_NAME}" yarn run publish-gh-pages
-deploy:
-  provider: npm
-  email: mail@betula.co
-  api_key:
-    secure: Ch4JtcuR/rVs9Om3oIQwQDf/Myh6T3ao3thXukxsfrUm4xQD88zqrMkK5lV5SxBEIlpc9iZqczgt1g6vvrbjcSI33/LBrL8MA8dL9vaTg+3mCMrglCnWiBNnh89oThuuQOxGAi3tv8Ubf5SxDvAUWF5wn13mgzeCfS156XvWlKsgte9WbnSFnVS0nfXBcYqVowddqNzh78N5ZA+6NLnjUowqABruQrKKL9n7zaiAt1ap+DaocVfZtJESs4mQkcfOv/RanMB8tdwN19gI80rHapu5RQEEreKwN+9cz6Ov+mNA7d7W+7EKpcCCyiMw2gGWf8wiR8Wqiz2KawNaQBvPp5x/5fVk197NIKE20PWcC79qH/39vkdVhO3TuEzVvmO/2q071YtATW75ClKwgdFL+jeRshiE/9KNGW35Ru6kwT+MHwpp8zMjK06+bmckNg3BDC22eyres8MvsbTqk2HxWOrJL3+uA2qqWVdHo/sswAV0D8wQ3trqRGNZkBj13/FjhVHO0/bqHov8XPnSe08Ep02TEHQcKK+sKNv/PNZqlXq+gpgrnA5194banbTRd3xb764RcGkwqc6H97THMnIzMRrLefzKQ14Hl76y9w8TBE7UNIXWfzezTm+UGIOCeHpMPGA+4Vm0RC1isMFPG6N4PqxCiP17Y1JpcVSNvf5cj6M=
-  on:
-    branch: master
-  skip_cleanup: true
+- npm run test-with-coveralls
+jobs:
+  include:
+    - stage: documentation
+      node_js: 12
+      script:
+      - git config --global user.name "${GH_NAME}"
+      - git config --global user.email "${GH_EMAIL}"
+      - echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
+      - cd website && yarn install && GIT_USER="${GH_NAME}" yarn run publish-gh-pages
+    - stage: npm release
+      node_js: 12
+      script: skip
+      deploy:
+        provider: npm
+        email: mail@betula.co
+        api_key:
+          secure: Ch4JtcuR/rVs9Om3oIQwQDf/Myh6T3ao3thXukxsfrUm4xQD88zqrMkK5lV5SxBEIlpc9iZqczgt1g6vvrbjcSI33/LBrL8MA8dL9vaTg+3mCMrglCnWiBNnh89oThuuQOxGAi3tv8Ubf5SxDvAUWF5wn13mgzeCfS156XvWlKsgte9WbnSFnVS0nfXBcYqVowddqNzh78N5ZA+6NLnjUowqABruQrKKL9n7zaiAt1ap+DaocVfZtJESs4mQkcfOv/RanMB8tdwN19gI80rHapu5RQEEreKwN+9cz6Ov+mNA7d7W+7EKpcCCyiMw2gGWf8wiR8Wqiz2KawNaQBvPp5x/5fVk197NIKE20PWcC79qH/39vkdVhO3TuEzVvmO/2q071YtATW75ClKwgdFL+jeRshiE/9KNGW35Ru6kwT+MHwpp8zMjK06+bmckNg3BDC22eyres8MvsbTqk2HxWOrJL3+uA2qqWVdHo/sswAV0D8wQ3trqRGNZkBj13/FjhVHO0/bqHov8XPnSe08Ep02TEHQcKK+sKNv/PNZqlXq+gpgrnA5194banbTRd3xb764RcGkwqc6H97THMnIzMRrLefzKQ14Hl76y9w8TBE7UNIXWfzezTm+UGIOCeHpMPGA+4Vm0RC1isMFPG6N4PqxCiP17Y1JpcVSNvf5cj6M=
+        on:
+          branch: master
+        skip_cleanup: true
 notifications:
   email:
     recipients:
