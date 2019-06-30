@@ -7,40 +7,20 @@
 
 const React = require('react');
 
-const CompLibrary = require('../../core/CompLibrary.js');
+// const CompLibrary = require('../../core/CompLibrary.js');
 
-const MarkdownBlock = CompLibrary.MarkdownBlock; /* Used to read markdown */
-const Container = CompLibrary.Container;
-const GridBlock = CompLibrary.GridBlock;
+// const MarkdownBlock = CompLibrary.MarkdownBlock; /* Used to read markdown */
+// const Container = CompLibrary.Container;
+// const GridBlock = CompLibrary.GridBlock;
 
-class HomeSplash extends React.Component {
+
+class Index extends React.Component {
   render() {
-    const {siteConfig, language = ''} = this.props;
+    const {config: siteConfig, language = ''} = this.props;
     const {baseUrl, docsUrl} = siteConfig;
     const docsPart = `${docsUrl ? `${docsUrl}/` : ''}`;
     const langPart = `${language ? `${language}/` : ''}`;
     const docUrl = doc => `${baseUrl}${docsPart}${langPart}${doc}`;
-
-    const SplashContainer = props => (
-      <div className="homeContainer">
-        <div className="homeSplashFade">
-          <div className="wrapper homeWrapper">{props.children}</div>
-        </div>
-      </div>
-    );
-
-    const Logo = props => (
-      <div className="projectLogo">
-        <img src={props.img_src} alt="Project Logo" />
-      </div>
-    );
-
-    const ProjectTitle = () => (
-      <h2 className="projectTitle">
-        {siteConfig.title}
-        <small>{siteConfig.tagline}</small>
-      </h2>
-    );
 
     const PromoSection = props => (
       <div className="section promoSection">
@@ -58,41 +38,26 @@ class HomeSplash extends React.Component {
       </div>
     );
 
-    return (
-      <SplashContainer>
-        <Logo img_src={`${baseUrl}img/logo.svg`} />
-        <div className="inner">
-          <ProjectTitle siteConfig={siteConfig} />
-          <PromoSection>
-            <Button href={docUrl('intro.html')}>Try It Out</Button>
-          </PromoSection>
-        </div>
-      </SplashContainer>
-    );
-  }
-}
-
-class Index extends React.Component {
-  render() {
-    const {config: siteConfig, language = ''} = this.props;
-    const {baseUrl} = siteConfig;
-
-    const Block = props => (
-      <Container
-        padding={['bottom', 'top']}
-        id={props.id}
-        background={props.background}>
-        <GridBlock
-          align="center"
-          contents={props.children}
-          layout={props.layout}
-        />
-      </Container>
-    );
 
     return (
       <div>
-        <HomeSplash siteConfig={siteConfig} language={language} />
+        <div style={{ background: "#20232a", textAlign: "center", padding: "30px 0" }}>
+          <img src={`${baseUrl}img/home-logo.svg`} />
+        </div>
+        <div className="homeContainer">
+          <div className="homeSplashFade">
+            <div className="wrapper homeWrapper">
+              <div className="inner">
+                <h2 className="projectTitle">
+                  <small>{siteConfig.tagline}</small>
+                </h2>
+                <PromoSection>
+                  <Button href={docUrl('intro.html')}>Try It Out</Button>
+                </PromoSection>
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="mainContainer">
         </div>
       </div>

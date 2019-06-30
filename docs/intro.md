@@ -14,7 +14,7 @@ Async context based Dependency Injection for Node.JS without pain with Dependenc
 
 ## Install
 
-```
+```bash
 npm install node-provide
 ```
 
