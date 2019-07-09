@@ -1,5 +1,13 @@
 {
   "docs": {
-    "Intro": ["intro"]
+    "Docs": [
+      "index",
+      "install",
+      "examples",
+      "overrides",
+      "unit-testing",
+      "isolate",
+      "api"
+    ]
   }
 }

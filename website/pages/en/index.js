@@ -52,7 +52,7 @@ class Index extends React.Component {
                   <small>{siteConfig.tagline}</small>
                 </h2>
                 <PromoSection>
-                  <Button href={docUrl('intro.html')}>Try It Out</Button>
+                  <Button href={docUrl('index.html')}>Try It Out</Button>
                 </PromoSection>
               </div>
             </div>

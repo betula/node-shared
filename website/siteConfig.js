@@ -26,7 +26,7 @@ const siteConfig = {
 
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
-    {doc: 'intro', label: 'Docs'},
+    {doc: 'index', label: 'Docs'},
     {blog: true, label: 'Blog'},
     { href: "https://github.com/betula/node-provide", label: "GitHub" },
   ],

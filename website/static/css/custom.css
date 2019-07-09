@@ -10,4 +10,5 @@
 
 .headerTitleWithLogo {
   font-weight: 100;
+  display: block !important;
 }
