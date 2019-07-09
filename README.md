@@ -1,4 +1,4 @@
-![node-provide](assets/readme-logo.svg)
+![node-provide](https://betula.github.io/node-provide/img/readme-logo.svg)
 
 [![npm version](https://badge.fury.io/js/node-provide.svg)](https://badge.fury.io/js/node-provide)
 [![Build Status](https://travis-ci.org/betula/node-provide.svg?branch=master)](https://travis-ci.org/betula/node-provide)

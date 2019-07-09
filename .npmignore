@@ -18,7 +18,6 @@ jest.config.js
 index.test.ts
 index.ts
 
-assets
 examples
 docs
 website
