@@ -1,6 +1,6 @@
 {
   "name": "node-provide",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Async context based Dependency Injection for Node.JS",
   "repository": {
     "url": "https://github.com/betula/node-provide"
