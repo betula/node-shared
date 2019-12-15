@@ -6,7 +6,7 @@
       "examples",
       "overrides",
       "unit-testing",
-      "isolate",
+      "zone",
       "api"
     ]
   }

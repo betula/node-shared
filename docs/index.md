@@ -6,12 +6,6 @@ sidebar_label: Getting Started
 
 Async context based Dependency Injection for Node.JS without pain with Dependency Injection Container, dependency registration, and configuration.
 
-- You can use it at any place of your application without rewrite your applications architecture or other preparations or initializations.
-- Each dependency can be class, function, or any another value, and plain JavaScript object too.
-- You can override your dependencies for organizing modules architecture, or unit testing without hack standard Node.JS require mechanism.
-- You can use TypeScript or JavaScript, with decorators or not. Different syntaxes for one mechanism. You can use the constructor to provide dependencies or not, as you wish.
-- You can create isolate context for multiple instances of your application (Dependency Injection scopes) with a different set of dependencies, overrides, and instances.
-
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--TypeScript with decorators-->
@@ -155,4 +149,10 @@ new App().start(); // You can create an instance directly as usually class
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-If you have questions or something else for me or this project, maybe architectures questions, improvement ideas or anything else, please make the issue.
+- You can use it at any place of your application without rewrite your applications architecture or other preparations or initializations.
+- Each dependency can be class, function, or any another value, and plain JavaScript object too.
+- You can override your dependencies for organizing modules architecture, or unit testing without hack standard Node.JS require mechanism.
+- You can use TypeScript or JavaScript, with decorators or not. Different syntaxes for one mechanism. You can use the constructor to provide dependencies or not, as you wish.
+- You can create isolate context for multiple instances of your application (Dependency Injection scopes) with a different set of dependencies, overrides, and instances.
+
+If you have questions or something else for me or this project, maybe architectures questions or improvement ideas, please make the issue in github.

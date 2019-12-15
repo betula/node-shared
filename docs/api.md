@@ -134,33 +134,23 @@ assign(A, 10);
 console.log(resolve(A)); // 10
 ```
 
-## isolate
+## zone
 
-Run your app in isolated Dependency Injection scope. All instances cached for this instance application will be isolated from all cached instances in other scopes. All overrides defined here will be inherited for nested isolated scopes but not available for others. The return value can be object, function, or any other value:
-- For object. All methods will be proxied and their return values converted to promises of them
-- For function. The function will be proxied and return value converted to promise of it.
-- For any value. Return it value without any changes
+Run your app in isolated Dependency Injection scope. All instances cached for this instance application will be isolated from all cached instances in other scopes. All overrides defined here will be inherited for nested isolated scopes but not available for others. No return value.
 
 ```javascript
-const proxy = await isolate(() => {
+await zone(async () => {
   const app = new App(); // Run you app here
+  await app.run();
   // ...
-  return {
-    methodA() {},
-    methodB() {},
-    // ...
-  }
 });
-// ...
-await proxy.methodA();
-await proxy.methodB();
 ```
 
 ```javascript
-await isolate(async () => {
+await zone(async () => {
   override(Dep1, Dep2);
 
-  await isolate(async () => {
+  await zone(async () => {
     override(Dep2, Dep3);
     // ...
     console.log(resolve(Dep1) instanceof Dep3); // true
