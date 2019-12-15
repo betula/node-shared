@@ -27,25 +27,7 @@ export const zoneIndex: ObjectMap<number> = {};
 export const zoneParentIndex: ObjectMap<number> = {};
 let hook: AsyncHook;
 
-type ProxyFunction<T> = T extends (...args: infer A) => infer R
-  ? R extends Promise<any>
-    ? T
-    : (...args: A) => Promise<R>
-  : never;
-type ProxyObject<T> = {
-  readonly [P in keyof T]: T[P] extends Function
-    ? ProxyFunction<T[P]>
-    : T[P]
-};
-type Proxy<T> = T extends Function
-  ? ProxyFunction<T>
-  : T extends any[]
-    ? any[]
-    : T extends object
-      ? ProxyObject<T>
-      : T;
-
-export function isolate<T = void>(callback: () => T): Promise<Proxy<T>> {
+export function zone<T = void>(callback: () => T): Promise<void> {
   if (typeof hook === "undefined") {
     hook = async_hooks.createHook({
       init(asyncId: number, type: any, triggerAsyncId: number) {
@@ -57,7 +39,6 @@ export function isolate<T = void>(callback: () => T): Promise<Proxy<T>> {
       },
       destroy(asyncId: number) {
         delete zoneIndex[asyncId];
-        delete zoneParentIndex[asyncId];
       },
     }).enable();
   }
@@ -67,10 +48,13 @@ export function isolate<T = void>(callback: () => T): Promise<Proxy<T>> {
       zoneParentIndex[asyncId] = zoneIndex[asyncId] || RootZoneId;
       zoneId = zoneIndex[asyncId] = asyncId;
       try {
-        resolve(proxify(await callback()));
+        await callback();
+        resolve();
       } catch (error) {
         reject(error);
       }
+      delete zoneParentIndex[asyncId];
+      cleanupZone(asyncId);
     });
   });
 }
@@ -307,95 +291,15 @@ export function reset() {
   });
 }
 
-class Chan {
-  private signal: () => void;
-  private next: Promise<void>;
-  private queue: (() => void)[] = [];
-
-  constructor() {
-    this.start();
+export function cleanupZone(zoneId: number) {
+  if (instances[zoneId]) {
+    instances[zoneId].clear();
+    delete instances[zoneId];
   }
-
-  public fn<T, K extends any[]>(fn: (...args: K) => T, self?: object): (...args: K) => Promise<T> {
-    const chan = this;
-    return function (this: any, ...args: K) {
-      return new Promise((resolve, reject) => {
-        chan.run(() => {
-          try {
-            resolve(fn.apply(self || this, args));
-          } catch (error) {
-            reject(error);
-          }
-        });
-      });
-    };
+  if (resolvePhases[zoneId]) {
+    resolvePhases[zoneId].clear();
+    delete resolvePhases[zoneId];
   }
-
-  private run(fn: () => void) {
-    this.queue.push(fn);
-    this.signal();
-  }
-
-  private start() {
-    this.up();
-    process.nextTick(async () => {
-      while (true) {
-        await this.next;
-        this.up();
-        const actions = this.queue.splice(0);
-        actions.forEach((action) => action());
-      }
-    });
-  }
-
-  private up() {
-    this.next = new Promise((resolve) => {
-      this.signal = resolve;
-    });
-  }
-}
-
-function proxify<T>(val: T): Proxy<T> {
-  const chan = new Chan();
-  let proxy: any;
-  if (Array.isArray(val)) {
-    proxy = (val as any[]).map((v) => (
-      (typeof v === "function")
-        ? chan.fn(v)
-        : v
-    ));
-  } else if (val && typeof val === "object"
-    && [Date, Error, Map, Set, WeakMap, WeakSet].every((type) => !(val instanceof type))
-  ) {
-    proxy = {};
-    Object.keys(val).forEach((key) => {
-      const v = (val as any)[key];
-      if (typeof v !== "function") {
-        proxy[key] = v;
-      }
-    });
-    const methods: any = {};
-    function collectMethods(obj: object) {
-      if (obj && obj !== Object.prototype) {
-        const descriptors = Object.getOwnPropertyDescriptors(obj);
-        Object.keys(descriptors).forEach((key) => {
-          if (typeof descriptors[key].value === "function" && key !== "constructor") {
-            methods[key] = key;
-          }
-        });
-        collectMethods((obj as any).__proto__);
-      }
-    }
-    collectMethods(val as any);
-    Object.keys(methods).forEach((key) => {
-      proxy[key] = chan.fn((val as any)[key], val as any);
-    });
-  } else if (typeof val === "function") {
-    proxy = (chan.fn as any)(val);
-  } else {
-    proxy = val;
-  }
-  return proxy;
 }
 
 function createProvideDescriptor(dep: Dep, propertyKey: PropertyKey) {

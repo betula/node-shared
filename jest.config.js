@@ -1,7 +1,10 @@
 module.exports = {
   globals: {
     "ts-jest": {
-      tsConfig: "tsconfig.json"
+      tsConfig: "tsconfig.test.json",
+      diagnostics: {
+        warnOnly: true
+      }
     }
   },
   transform: {

@@ -1,6 +1,6 @@
 {
   "name": "node-provide",
-  "version": "0.2.8",
+  "version": "0.3.0",
   "description": "Async context based Dependency Injection for Node.JS",
   "repository": {
     "url": "https://github.com/betula/node-provide"
@@ -21,6 +21,7 @@
     "provide",
     "injection",
     "inject",
+    "zone",
     "node"
   ],
   "author": "Viacheslav Bereza <mail@betula.co>",
@@ -29,13 +30,13 @@
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
-    "@types/node": "^12.0.8",
-    "typescript": "^3.5.1",
-    "tslint": "^5.17.0",
-    "tslint-config-airbnb": "^5.11.1",
-    "jest": "^24.8.0",
-    "ts-jest": "^24.0.2",
-    "@types/jest": "^24.0.13",
-    "coveralls": "^3.0.4"
+    "@types/node": "^12.12.17",
+    "typescript": "^3.7.3",
+    "tslint": "^5.20.1",
+    "tslint-config-airbnb": "^5.11.2",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.2.0",
+    "@types/jest": "^24.0.23",
+    "coveralls": "^3.0.9"
   }
 }

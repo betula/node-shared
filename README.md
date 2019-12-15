@@ -252,10 +252,10 @@ after(cleanup);
 
 ## Isolate Dependency Injection context
 
-If you want more then one instance of your application with different configuration or with a different overrides of dependencies, you can use `isolate`. It works using async context for separate Dependency Injection scopes. Node.JS async hook will be created only once after the first call of `isolate`.
+If you want more then one instance of your application with different configuration or with a different overrides of dependencies, you can use `zone`. It works using async context for separate Dependency Injection scopes. Node.JS async hook will be created only once after the first call of `zone`.
 
 ```typescript
-import { isolate, provide } from "node-provide";
+import { zone, provide, resolve } from "node-provide";
 
 class A {
   private counter: number = 0;
@@ -275,17 +275,19 @@ class B {
   }
 }
 
-// Each section of `isolate` use different dependency injection scopes and different instances of your dependencies
-const b1Proxy = await isolate(() => new B);
-const b2Proxy = await isolate(() => new B);
-
-// The returned object from `isolate` had some methods and properties signature but each return value wrapped to Promise
-await b1Proxy.incAndPrint(); // Counter 1
-await b1Proxy.incAndPrint(); // Counter 2
-await b2Proxy.incAndPrint(); // Counter 1
+// Each section of `zone` use different dependency injection scopes and different instances of your dependencies
+await zone(() => {
+  const b = new B;
+  b.incAndPrint(); // Counter 1
+  b.incAndPrint(); // Counter 2
+});
+await zone(() => {
+  const b = new B;
+  b.incAndPrint(); // Counter 1
+});
 ```
 
-In each of `isolate` section, you can define any overrides, scopes can be nested with inherit overrides.
+In each of `zone` section, you can define any overrides, scopes can be nested with inherit overrides.
 
 ```javascript
 // config.json
@@ -299,11 +301,12 @@ In each of `isolate` section, you can define any overrides, scopes can be nested
 }
 
 // hello.js
+const attach = require("node-provide").attach;
 const config = require("./config");
 
 class Hello {
   constructor() {
-    assign(this, { config });
+    attach(this, { config });
   }
   echo() {
     console.log(this.config.text);
@@ -311,15 +314,14 @@ class Hello {
 }
 
 // index.js
-const { isolate, override } = require("node-provide");
+const { zone, override } = require("node-provide");
 // ...
 
 (async () => {
-  const hello1Proxy = await isolate(() => {
+  await zone(() => {
     override(config, config2); // Override `config` dependency to `config2` only for this scope
-    return new Hello();
+    new Hello().echo(); // "Hello 2!";
   })
-  await hello1Proxy.echo(); // "Hello 2!";
   new Hello().echo(); // "Hello!"
 })();
 ```
@@ -456,33 +458,23 @@ assign(A, 10);
 console.log(resolve(A)); // 10
 ```
 
-**isolate**
+**zone**
 
-Run your app in isolated Dependency Injection scope. All instances cached for this instance application will be isolated from all cached instances in other scopes. All overrides defined here will be inherited for nested isolated scopes but not available for others. The return value can be object, function, or any other value:
-- For object. All methods will be proxied and their return values converted to promises of them
-- For function. The function will be proxied and return value converted to promise of it.
-- For any value. Return it value without any changes
+Run your app in isolated Dependency Injection scope. All instances cached for this instance application will be isolated from all cached instances in other scopes. All overrides defined here will be inherited for nested isolated scopes but not available for others. No return value.
 
 ```javascript
-const proxy = await isolate(() => {
+await zone(async () => {
   const app = new App(); // Run you app here
+  await app.run();
   // ...
-  return {
-    methodA() {},
-    methodB() {},
-    // ...
-  }
 });
-// ...
-await proxy.methodA();
-await proxy.methodB();
 ```
 
 ```javascript
-await isolate(async () => {
+await zone(async () => {
   override(Dep1, Dep2);
 
-  await isolate(async () => {
+  await zone(async () => {
     override(Dep2, Dep3);
     // ...
     console.log(resolve(Dep1) instanceof Dep3); // true

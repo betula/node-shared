@@ -7,7 +7,7 @@ import {
   container,
   attach,
   bind,
-  isolate,
+  zone,
   assign,
   inject,
   reset,
@@ -330,40 +330,33 @@ test("Should work assign", () => {
   expect((d as any).v).toBe("D");
 });
 
-test("Should work isolate", async () => {
-  const spyA = jest.fn();
-  class A {
-    s: string;
-    constructor() {
-      spyA();
-    }
-  }
-  const spyB = jest.fn();
-  class B {
-    n: number;
-    @provide a: A;
-    constructor(n: number, s: string) {
-      this.a.s = s;
-      this.n = n;
-      spyB();
-    }
-    getS() { return this.a.s; }
-    getN() { return this.n; }
-  }
-  const b1 = await isolate(() => new B(10, "11"));
-  const b2 = await isolate(() => new B(12, "13"));
-  expect(spyA).toBeCalledTimes(2);
-  expect(spyB).toBeCalledTimes(2);
-  expect(b1).not.toBe(b2);
-  expect(b1).not.toBeInstanceOf(B);
-  expect(await b1.getN()).toBe(10);
-  expect(await b1.getS()).toBe("11");
-  expect(b2).not.toBeInstanceOf(B);
-  expect(await b2.getN()).toBe(12);
-  expect(await b2.getS()).toBe("13");
+test("Should work nested zone", async () => {
+  const spy = jest.fn();
+  class A {};
+  class B {};
+  class C {};
+  class D {};
+
+  await zone(async () => {
+    override(A, B);
+    await zone(async () => {
+      override(B, C);
+      await zone(async () => {
+        override(C, D);
+        expect(resolve(A)).toBeInstanceOf(D);
+        spy();
+      });
+      expect(resolve(A)).toBeInstanceOf(C);
+      spy();
+    });
+    expect(resolve(A)).toBeInstanceOf(B);
+    spy();
+  });
+  expect(resolve(A)).toBeInstanceOf(A);
+  expect(spy).toBeCalledTimes(3);
 });
 
-test("Should work isolate with local override", async () => {
+test("Should work zone with local override", async () => {
   const spyF = jest.fn().mockReturnValueOnce(1).mockReturnValueOnce(2);
   const F = () => spyF();
   class A {
@@ -377,71 +370,50 @@ test("Should work isolate with local override", async () => {
       return super.getF() + 10;
     }
   }
-  const ai = await isolate(() => {
+  await zone(() => {
     override(A, B);
-    return resolve(A);
+    const a = resolve(A);
+    expect(a).toBeInstanceOf(B);
+    expect(a.getF()).toBe(11);
   });
   const a = resolve(A);
   expect(a).toBeInstanceOf(A);
-  expect(a.f).toBe(1);
-  expect(await ai.getF()).toBe(12);
+  expect(a.f).toBe(2);
   expect(spyF).toBeCalledTimes(2);
 });
 
-test("Should work isolate proxy", async () => {
-  class A { def = "default"; am() { return "a"; } }
-  class B extends A { bm() { return "b"; } }
-  expect((await isolate(() => new B())).am()).resolves.toBe("a");
-  expect((await isolate(() => new B())).bm()).resolves.toBe("b");
-  expect((await isolate(() => new B())).def).toBe("default");
-  expect((await isolate(() => ({ am() { return "om"; } }))).am()).resolves.toBe("om");
-  expect((await isolate(() => ({ am() { return "om"; }, k: 11 }))).k).toBe(11);
-  expect((await isolate(() => [(():number => 0), 11]))[0]()).resolves.toBe(0);
-  expect((await isolate(() => [(():number => 0), 11]))[1]).toBe(11);
-  expect((await isolate(() => () => 0))()).resolves.toBe(0);
-  expect(isolate(() => 10)).resolves.toBe(10);
-  expect(isolate(() => null)).resolves.toBe(null);
-  expect(isolate(() => "hello")).resolves.toBe("hello");
-  expect(isolate(() => undefined)).resolves.toBe(undefined);
-  expect(isolate(() => new Date())).resolves.toBeInstanceOf(Date);
-  expect(isolate(() => new Map())).resolves.toBeInstanceOf(Map);
-  expect(isolate(() => new WeakMap())).resolves.toBeInstanceOf(WeakMap);
-  expect(isolate(() => new WeakSet())).resolves.toBeInstanceOf(WeakSet);
-  expect(isolate(() => new Error())).resolves.toBeInstanceOf(Error);
-});
-
-test("Should throw error in isolate", async () => {
-  await expect(isolate(() => { throw new Error("A"); })).rejects.toThrow("A");
-});
-
-test("Should throw error in isolate proxy", async () => {
-  const proxy = await isolate(() => {
-    return {
-      mtd():void { throw new Error("Mtd"); },
-    };
-  });
-  await expect(proxy.mtd()).rejects.toThrow("Mtd");
+test("Should throw error in zone", async () => {
+  await expect(zone(() => { throw new Error("A"); })).rejects.toThrow("A");
 });
 
 test("Should work getting current zone id", async () => {
   expect(getZoneId()).toBe(RootZoneId);
-  const z1 = await isolate(getZoneId);
+  let z1: number;
+  await zone(() => { z1 = getZoneId() });
   expect(z1).not.toBe(RootZoneId);
-  const z2 = await isolate(getZoneId);
+  let z2: number;
+  await zone(() => { z2 = getZoneId() });
   expect(z2).not.toBe(RootZoneId);
   expect(z2).not.toBe(z1);
 });
 
-test("Should destroy async context in isolate", async () => {
-  const getIsolateZoneId = await isolate(() => getZoneId);
-  const isolateZoneId = await getIsolateZoneId();
-  const zoneId = getZoneId();
+test("Should destroy async context in zone", async () => {
+  let zoneId = getZoneId();
+  let isolateZoneId: number;
+  const spy = jest.fn();
+  await zone(() => {
+    isolateZoneId = getZoneId();
+    expect(zoneIndex[isolateZoneId]).toBe(isolateZoneId);
+    expect(zoneParentIndex[isolateZoneId]).toBe(zoneId);
+    spy();
+  });
+  const currentZoneId = getZoneId();
+  expect(currentZoneId).toBe(zoneId);
   expect(zoneId).not.toBe(isolateZoneId);
-  expect(zoneIndex[isolateZoneId]).toBe(isolateZoneId);
-  expect(zoneParentIndex[isolateZoneId]).toBe(zoneId);
+  expect(zoneParentIndex[isolateZoneId]).toBeUndefined();
   await new Promise(setTimeout as any);
   expect(zoneIndex[isolateZoneId]).toBeUndefined();
-  expect(zoneParentIndex[isolateZoneId]).toBeUndefined();
+  expect(spy).toBeCalled();
 });
 
 test("Should throw error when circular dependency detected", () => {
