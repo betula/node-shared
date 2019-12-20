@@ -4,12 +4,8 @@ import {
   provide,
   resolve,
   override,
-  container,
-  attach,
-  bind,
   zone,
   assign,
-  inject,
   reset,
   cleanup,
   getZoneId,
@@ -72,7 +68,7 @@ test("Should work resolve function", () => {
   }
   const c = new C();
   expect(resolve(A)).toBe(c.a);
-  const [a, b] = resolve(A, B);
+  const [a, b] = [A, B].map(resolve);
   expect(a).toBe(c.a);
   expect(b).toBe(c.b);
 });
@@ -95,7 +91,8 @@ test("Should cache override", () => {
   class B {
     @provide a: A;
   }
-  override([A, A2], [A2, A3]);
+  override(A, A2);
+  override(A2, A3);
   expect(overrides[RootZoneId].size).toBe(2);
   expect(resolve(B).a).toBeInstanceOf(A3);
   expect(instances[RootZoneId].get(A)).toBeInstanceOf(A3);
@@ -134,55 +131,6 @@ test("Should work with JS semantic", () => {
   expect(resolve(B).a).toBeInstanceOf(A);
 });
 
-test("Should work container function", () => {
-  class A {}
-  class B {}
-  class C {}
-  const F = (): { n: number } => ({ n: 10 });
-  const F2 = function () { return { m: 11 }; };
-  const m = container({ a: A }, container({ b: B }), { c: C, f: F });
-  const p = container(m, { k: "K" }, container({ f2: F2 }));
-  expect(m.a).toBeInstanceOf(A);
-  expect(m.b).toBeInstanceOf(B);
-  expect(m.c).toBeInstanceOf(C);
-  expect(p.f.n).toBe(10);
-  expect(p.f2.m).toBe(11);
-  expect(p.k).toBe("K");
-});
-
-test("Should work attach function", () => {
-  class A {}
-  class B {}
-  class C {}
-  const p = {};
-  const m = attach(p, { a: A, b: B }, container({ c: C }));
-  expect(m).toBe(p);
-  expect(m.a).toBeInstanceOf(A);
-  expect(m.b).toBeInstanceOf(B);
-  expect(m.c).toBeInstanceOf(C);
-});
-
-test("Should cache getters in attach", () => {
-  class A {}
-  const m = attach({}, { a: A });
-  const a = m.a;
-  instances[RootZoneId].clear();
-  expect(instances[RootZoneId].size).toBe(0);
-  expect(m.a).toBe(a);
-  expect(instances[RootZoneId].size).toBe(0);
-});
-
-test("Should work resolve with multiple dependencies", () => {
-  class A {}
-  const F = () => 10;
-  const J = {};
-  const [a, f, j] = resolve(A, F, J);
-  expect(a).toBeInstanceOf(A);
-  expect(f).toBe(10);
-  expect(j).toBe(J);
-  expect(resolve()).toBeUndefined();
-});
-
 test("should work resolve with plain values", () => {
   const d = new Date();
   const c = {};
@@ -191,124 +139,6 @@ test("should work resolve with plain values", () => {
   expect(resolve(10)).toBe(10);
   expect(resolve(d)).toBe(d);
   expect(resolve(c)).toBe(c);
-});
-
-test("Should work bind", () => {
-  class A {}
-  const F = () => 10;
-  const J = {};
-  const spy = jest.fn();
-  const func = bind({ j: J }, container({ a: A, f: F }))((cont, x1, x2) => {
-    expect(cont.j).toBe(J);
-    expect(cont.a).toBeInstanceOf(A);
-    expect(cont.f).toBe(10);
-    expect(x1).toBe(true);
-    expect(x2).toBe("X");
-    spy();
-  });
-  expect(typeof func).toBe("function");
-  func(true, "X");
-  expect(spy).toBeCalled();
-});
-
-test("Should work inject with dependecies for class", () => {
-  const spyF = jest.fn().mockReturnValue({ v: 11 });
-  const F = () => spyF();
-  class A {}
-  const spyM = jest.fn();
-  const spyC = jest.fn();
-  const dec = inject({ a: A }, container({ f: F }));
-  expect(typeof dec).toBe("function");
-  class M {
-    f: any;
-    a: any;
-    method() {
-      expect(this.f.v).toBe(11);
-      expect(this.a).toBeInstanceOf(A);
-      spyM();
-    }
-    constructor(x1: string, x2: number) {
-      expect(x1).toBe("x1");
-      expect(x2).toBe(8);
-      expect(this.f.v).toBe(11);
-      expect(this.a).toBeInstanceOf(A);
-      spyC();
-    }
-  }
-  const cls = dec(M);
-  expect(cls).toBe(M);
-  const c = new cls("x1", 8);
-  expect(spyC).toBeCalledTimes(1);
-  c.method();
-  expect(spyM).toBeCalledTimes(1);
-  expect(spyF).toBeCalledTimes(1);
-});
-
-test("Should work inject with dependencies for plain objects", () => {
-  class A { a = "a"; }
-  class B { b = "b"; }
-  const dec = inject({ a: A }, container({ b: B }));
-  const c = dec({
-    c: 10,
-    getA(this: any) {
-      return this.a.a;
-    },
-  });
-  expect(c.a.a).toBe("a");
-  expect(c.b.b).toBe("b");
-  expect(c.c).toBe(10);
-  expect(c.getA()).toBe("a");
-});
-
-test("Should work inject as decorator without parameters", () => {
-  class A { a = "a"; }
-  @inject()
-  class B {
-    constructor(public a: A) {}
-  }
-  @inject
-  class C {
-    constructor(public a: A, public b: B) {}
-  }
-  @inject
-  class Z {}
-  const b = resolve(B);
-  const c = resolve(C);
-  expect(b.a).toBeInstanceOf(A);
-  expect(c.a).toBe(b.a);
-  expect(c.b).toBe(b);
-  expect(c.b.a.a).toBe("a");
-  expect(new Z).toBeInstanceOf(Z);
-});
-
-test("Should work inject with dependencies configs in arguments", () => {
-  const spy = jest.fn();
-  const F = () => ({ n: 10 });
-  @inject({ f: F })
-  class A {
-    constructor() {
-      expect((this as any).f.n).toBe(10);
-      spy();
-    }
-  }
-  new A();
-  expect(spy).toBeCalled();
-});
-
-test("Should woth inject with array of dependencies in argument", () => {
-  const spy = jest.fn();
-  class A { s = "s"; }
-  const F = () => ({ n: 10 });
-  @inject([A, F])
-  class B {
-    constructor(a: any, f: any) {
-      expect(a.s).toBe("s");
-      expect(f.n).toBe(10);
-      spy();
-    }
-  }
-  new (B as any)();
-  expect(spy).toBeCalled();
 });
 
 test("Should work assign", () => {
@@ -320,14 +150,11 @@ test("Should work assign", () => {
   const j = {};
   override(A, B);
   assign(A, j);
-  assign([C, { v: "C" }], [D, { v: "D" }]);
   assign(E, 10);
   expect(resolve(E)).toBe(10);
-  const [a, b, c, d] = resolve(A, B, C, D);
+  const [a, b] = [A, B].map(resolve);
   expect(a).toBe(j);
   expect(b).toBe(j);
-  expect((c as any).v).toBe("C");
-  expect((d as any).v).toBe("D");
 });
 
 test("Should work nested zone", async () => {

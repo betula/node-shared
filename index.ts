@@ -59,50 +59,6 @@ export function zone<T = void>(callback: () => T): Promise<void> {
   });
 }
 
-type DepsConfig<T> = {
-  [P in keyof T]: Dep<T[P]>;
-};
-type Deps = {
-  [key: string]: any;
-};
-type MoreDepsConfig = {
-  [key: string]: any;
-};
-class Container {}
-
-export function container<T0 extends Deps>(...configs: [DepsConfig<T0>]): T0;
-export function container<T0 extends Deps, T1 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>]): T0 & T1;
-export function container<T0 extends Deps, T1 extends Deps, T2 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>]): T0 & T1 & T2;
-export function container<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>]): T0 & T1 & T2 & T3;
-export function container<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps, T4 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>, DepsConfig<T4>, ...MoreDepsConfig[]]): T0 & T1 & T2 & T3 & T4;
-export function container(...configs: any[]) {
-  const propDescriptors: any = {};
-  configs.forEach((options: any) => {
-    const isContainer = options instanceof Container;
-    Object.keys(options).forEach((key) => {
-      let get;
-      if (isContainer) {
-        get = Object.getOwnPropertyDescriptor(options, key)!.get;
-      } else {
-        const val = options[key];
-        if (typeof val === "function") {
-          get = () => resolve(val);
-        } else {
-          get = () => val;
-        }
-      }
-      propDescriptors[key] = {
-        get,
-        enumerable: true,
-        configurable: true,
-      };
-    });
-  });
-  const cont = new Container();
-  Object.defineProperties(cont, propDescriptors);
-  return cont;
-}
-
 type PropertyKey = string | symbol;
 
 export function provide(target: object, propertyKey: PropertyKey): any;
@@ -120,109 +76,8 @@ export function provide(targetOrDep: any, propertyKey?: any): any {
   );
 }
 
-type InjectDecRetFn<T> = <P>(target: P) =>
-  P extends ClassType<infer M, infer K>
-    ? ClassType<M & T, K>
-    : P & T;
-
-export function inject(): <T extends any>(target: ClassType<T>) => ClassType<T, []>;
-export function inject<T extends ClassType>(Class: T): T extends ClassType<infer U> ? ClassType<U, []> : never;
-export function inject<T extends Dep[]>(Deps: T): <T extends any>(target: ClassType<T>) => ClassType<T, []>;
-export function inject<T0 extends Deps>(...configs: [DepsConfig<T0>]): InjectDecRetFn<T0>;
-export function inject<T0 extends Deps, T1 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>]): InjectDecRetFn<T0 & T1>;
-export function inject<T0 extends Deps, T1 extends Deps, T2 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>]): InjectDecRetFn<T0 & T1 & T2>;
-export function inject<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>]): InjectDecRetFn<T0 & T1 & T2 & T3>;
-export function inject<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps, T4 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>, DepsConfig<T4>, ...MoreDepsConfig[]]): InjectDecRetFn<T0 & T1 & T2 & T3 & T4>;
-export function inject(...configsOrClassOrDeps: any[]) {
-  if (configsOrClassOrDeps.length === 0) {
-    return (Class: any) => {
-      return createInjectDecoratedClass(Reflect.getMetadata("design:paramtypes", Class), Class);
-    };
-  }
-  if (configsOrClassOrDeps.length === 1) {
-    const classOrDeps = configsOrClassOrDeps[0];
-    if (typeof classOrDeps === "function") {
-      return inject()(classOrDeps);
-    }
-    if (Array.isArray(classOrDeps)) {
-      return (Class: any) => {
-        return createInjectDecoratedClass(classOrDeps, Class);
-      };
-    }
-  }
-  return (target: any) => {
-    (attach as any)(target.prototype || target, ...configsOrClassOrDeps);
-    return target;
-  };
-}
-
-export function attach<Y extends object, T0 extends Deps>(target: Y, ...configs: [DepsConfig<T0>]): Y & T0;
-export function attach<Y extends object, T0 extends Deps, T1 extends Deps>(target: Y, ...configs: [DepsConfig<T0>, DepsConfig<T1>]): Y & T0 & T1;
-export function attach<Y extends object, T0 extends Deps, T1 extends Deps, T2 extends Deps>(target: Y, ...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>]): Y & T0 & T1 & T2;
-export function attach<Y extends object, T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps>(target: Y, ...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>]): Y & T0 & T1 & T2 & T3;
-export function attach<Y extends object, T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps, T4 extends Deps>(target: Y, ...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>, DepsConfig<T4>, ...MoreDepsConfig[]]): Y & T0 & T1 & T2 & T3 & T4;
-export function attach(target: any, ...configs: any[]) {
-  const cont = (container as any)(...configs);
-  const containerDescriptors = Object.getOwnPropertyDescriptors(cont);
-  Object.keys(containerDescriptors).forEach((key) => {
-    Object.defineProperty(target, key, {
-      get() {
-        const instance = containerDescriptors[key].get!();
-        Object.defineProperty(this, key, {
-          value: instance,
-          enumerable: true,
-          configurable: false,
-          writable: false,
-        });
-        return instance;
-      },
-      enumerable: true,
-      configurable: true,
-    });
-  });
-  return target;
-}
-
-type BindDecRetFn<T> = <M extends any[], P>(func: (cont: T, ...args: M) => P) => ((...args: M) => P);
-
-export function bind<T0 extends Deps>(...configs: [DepsConfig<T0>]): BindDecRetFn<T0>;
-export function bind<T0 extends Deps, T1 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>]): BindDecRetFn<T0 & T1>;
-export function bind<T0 extends Deps, T1 extends Deps, T2 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>]): BindDecRetFn<T0 & T1 & T2>;
-export function bind<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>]): BindDecRetFn<T0 & T1 & T2 & T3>;
-export function bind<T0 extends Deps, T1 extends Deps, T2 extends Deps, T3 extends Deps, T4 extends Deps>(...configs: [DepsConfig<T0>, DepsConfig<T1>, DepsConfig<T2>, DepsConfig<T3>, DepsConfig<T4>, ...MoreDepsConfig[]]): BindDecRetFn<T0 & T1 & T2 & T3 & T4>;
-export function bind(...configs: any[]) {
-  const cont = (container as any)(...configs);
-  return (func: any) => {
-    return function (this: any, ...args: any[]): any {
-      return func.call(this, cont, ...args);
-    };
-  };
-}
-
-export function resolve(): void;
-export function resolve<T0>(...deps: [Dep<T0>]): T0;
-export function resolve<T0, T1>(...deps: [Dep<T0>, Dep<T1>]): [T0, T1];
-export function resolve<T0, T1, T2>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>]): [T0, T1, T2];
-export function resolve<T0, T1, T2, T3>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>]): [T0, T1, T2, T3];
-export function resolve<T0, T1, T2, T3, T4>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>]): [T0, T1, T2, T3, T4];
-export function resolve<T0, T1, T2, T3, T4, T5>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>, Dep<T5>]): [T0, T1, T2, T3, T4, T5];
-export function resolve<T0, T1, T2, T3, T4, T5, T6>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>, Dep<T5>, Dep<T6>]): [T0, T1, T2, T3, T4, T5, T6];
-export function resolve<T0, T1, T2, T3, T4, T5, T6, T7>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>, Dep<T5>, Dep<T6>, Dep<T7>]): [T0, T1, T2, T3, T4, T5, T6, T7];
-export function resolve<T0, T1, T2, T3, T4, T5, T6, T7, T8>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>, Dep<T5>, Dep<T6>, Dep<T7>, Dep<T8>]): [T0, T1, T2, T3, T4, T5, T6, T7, T8];
-export function resolve<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(...deps: [Dep<T0>, Dep<T1>, Dep<T2>, Dep<T3>, Dep<T4>, Dep<T5>, Dep<T6>, Dep<T7>, Dep<T8>, Dep<T9>, ...Dep[]]): [T0, T1, T2, T3, T4, T5, T6, T7, T8, T9];
-export function resolve(...deps: any[]) {
-  if (deps.length === 0) {
-    return;
-  }
-  if (deps.length > 1) {
-    return deps.map((dep) => resolve(dep));
-  }
-  let instance;
-  const dep = deps[0];
-  if (!dep) {
-    return dep;
-  }
-  instance = getInstance(dep);
+export function resolve<T>(dep: Dep<T>): T {
+  let instance = getInstance(dep);
   if (!instance) {
     const OverrideDep = getOverride(dep);
     if (typeof OverrideDep !== "undefined") {
@@ -232,8 +87,8 @@ export function resolve(...deps: any[]) {
     setResolvePhase(dep, DepResolvePhase.Start);
     if (typeof dep === "function") {
       instance = (typeof dep.prototype === "undefined")
-        ? dep()
-        : new dep();
+        ? (dep as () => T)()
+        : new (dep as new () => T)();
     } else {
       instance = dep;
     }
@@ -243,32 +98,15 @@ export function resolve(...deps: any[]) {
   return instance;
 }
 
-type DepsPair = [Dep, Dep];
-
-export function override(from: Dep, to: Dep): void;
-export function override(...fromToPairs: DepsPair[]): void;
-export function override(...fromOrFromToPairs: any[]) {
-  if (Array.isArray(fromOrFromToPairs[0])) {
-    (fromOrFromToPairs as DepsPair[]).forEach((pair) => setOverride(...pair));
-  } else {
-    setOverride(...fromOrFromToPairs as DepsPair);
-  }
+export function override(from: Dep, to: Dep) {
+  setOverride(from, to);
 }
 
-type DepInstPair<T = any> = [Dep<T>, T];
-
-export function assign(dep: Dep, instance: any): void;
-export function assign(...depInstPairs: DepInstPair[]): void;
-export function assign(...depOrDepInstPairs: any[]) {
-  if (Array.isArray(depOrDepInstPairs[0])) {
-    (depOrDepInstPairs as DepInstPair[]).forEach((pair) => assign(...pair));
-  } else {
-    const [dep, instance] = depOrDepInstPairs;
-    setInstance(dep, instance);
-    const OverrideDep = getOverride(dep);
-    if (typeof OverrideDep !== "undefined") {
-      assign(OverrideDep, instance);
-    }
+export function assign(dep: Dep, instance: any) {
+  setInstance(dep, instance);
+  const OverrideDep = getOverride(dep);
+  if (typeof OverrideDep !== "undefined") {
+    assign(OverrideDep, instance);
   }
 }
 
@@ -316,24 +154,6 @@ function createProvideDescriptor(dep: Dep, propertyKey: PropertyKey) {
     },
     enumerable: true,
     configurable: true,
-  };
-}
-
-function createInjectDecoratedClass(deps: Deps[], Class: ClassType) {
-  if (!deps || deps.length === 0) {
-    return Class;
-  }
-  if (deps.length === 1) {
-    return class extends Class {
-      constructor() {
-        super(resolve(deps[0]));
-      }
-    };
-  }
-  return class extends Class {
-    constructor() {
-      super(...(resolve as any)(...deps));
-    }
   };
 }
 

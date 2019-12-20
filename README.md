@@ -41,16 +41,6 @@ export default class App {
   }
 }
 
-// or using @inject decorator and constructor parameters
-@inject
-export default class App {
-  constructor(
-    public db: Db,
-    public server: Server,
-  ) { /* ... */ }
-  // ...
-}
-
 // index.ts
 new App().start(); // You can create an instance directly as usually class
 ```
@@ -71,88 +61,6 @@ export default class App {
     // ...
   }
 }
-
-// or using @inject decorator with inject to constructor
-@inject([Db, Server])
-export default class App {
-  constructor(db, server) { /* ... */ }
-  // ...
-}
-
-// or using @inject decorator with injecting into `this`
-@inject({
-  db: Db,
-  server: Server,
-})
-export default class App {
-  start() {
-    this.db.init();
-    // ...
-  }
-  // ...
-}
-
-// index.js
-new App().start(); // You can create an instance directly as usually class
-```
-
-Pure JavaScript without decorators.
-
-```javascript
-const { inject, attach, container } = require("node-provide");
-// ...
-
-const Db = require("./db");
-const Server = require("./server");
-// ...
-
-const services = container({
-  db: Db,
-  server: Server,
-});
-
-// Using in function
-module.exports = function() {
-  return {
-    start() {
-      services.db.init();
-      // ...
-    },
-    // ...
-  }
-}
-
-// or using attach to `this` in the constructor
-module.exports = class App {
-  constructor() {
-    attach(this, {
-      db: Db,
-      server: Server,
-    });
-  }
-  // ...
-  start() {
-    this.db.init();
-    // ...
-  }
-}
-
-// or using inject decorator with injecting into the constructor
-class App {
-  constructor(db, server) { /* ... */ }
-  // ...
-}
-module.exports = inject([Db, Server])(App);
-
-// or using inject decorator with injecting into `this`
-class App {
-  start() {
-    this.db.init();
-    // ...
-  }
-  // ...
-}
-module.exports = inject(services)(App);
 
 // index.js
 new App().start(); // You can create an instance directly as usually class
@@ -330,65 +238,13 @@ const { zone, override } = require("node-provide");
 
 **resolve**
 
-Returns instance of your dependency, or list of instances for an array of dependencies. Each dependency can be class, function or any value.
+Returns instance of your dependency. Each dependency can be class, function or any value.
 - For class. The class will be instantiated once and cached
 - For function. The function will be called and result cached
 - For any value. Return it value without any changes
 
 ```javascript
 const depInstance = resolve(Dep);
-const [ dep1, dep2, ... ] = resolve(Dep1, Dep2, ...);
-```
-
-**container**
-
-Returns a plain object with instantiated values. Each argument can be the object of dependencies or result of previous `container` call. The result will be merged.
-
-```javascript
-const cont1 = container({ dep1: Dep1, dep2: Dep2, ... }, { dep3, Dep3 }, ...);
-const cont2 = container({ dep4: Dep4 }, cont1, { dep5: Dep5 }, container({ dep6: Dep6 }, ...), ...);
-const { dep1, dep2, dep3, dep4, dep5, dep6, ... } = cont2;
-```
-
-**inject**
-
-Decorator to provide dependencies into object or class. If it runs without arguments it uses reflect metadata for determine list of dependencies from class constructor parameters. For TypeScript your need enable `experimentalDecorators` and `emitDecoratorMetadata` options in your `tsconfig.json`.
-
-```typescript
-@inject // or @inject() its same
-class A {
-  constructor(public dep1: Dep1, public dep2: Dep2, ...) {}
-}
-const a = new (A as new () => A); // Important: TypeScript can't understanding that constructor signature was changed after use `inject` decorator
-// ...
-
-// Or if A is dependency too you can use `resolve` to get an instance of it
-const a = resolve(A);
-```
-
-If it runs with an array of dependency it works the same but without reflect metadata.
-
-```javascript
-@inject([Dep1, Dep2, Dep3, ...])
-class {
-  constructor(dep1, dep2, dep3, ...) {}
-}
-```
-
-Or exists signature of this method same as `container`, but return decorator function with injecting all dependency instances into `prototype` if it's class, or into `this` if its plain object.
-
-```javascript
-const decorator = @inject({ dep1: Dep1 }, container({ dep2, Dep2 }), ...);
-const Class = decorator(class {
-  anyMethodOrConstructor() {
-    const { dep1, dep2 } = this;
-  }
-});
-const obj = decorator({
-  anyMethod() {
-    const { dep1, dep2 } = this;
-  }
-});
 ```
 
 **provide**
@@ -408,32 +264,6 @@ In TypeScript exists the problem that it doesn't understand that property from n
 class {
   @provide dep1!: Dep1;
 }
-```
-
-**attach**
-
-Provide instances of dependencies into the object. Signature of function same as the `container`.
-
-```javascript
-const m = {};
-const m2 = attach(m, { dep1: Dep1, ...}, container({ dep2: Dep2, ...}, ...), ...);
-console.log(m === m2); // true
-const dep1 = m.dep1;
-const dep2 = m.dep2;
-```
-
-**bind**
-
-Function decorator for provide container as the first parameter in the decorated function. Signature of function same as the `container`.
-
-```javascript
-const decorator = bind({ dep1: Dep1, ...}, container({ dep2: Dep2, ...}), ...);
-const fn = decorator((cont, x, y) => {
-  const dep1 = cont.dep1;
-  const dep2 = cont.dep2;
-  // ...
-});
-fn(x, y);
 ```
 
 **override**
