@@ -9,7 +9,7 @@ Async context based Dependency Injection for Node.JS without pain with Dependenc
 - You can use it at any place of your application without rewrite your applications architecture or other preparations or initializations.
 - Each dependency can be class, function, or any another value, and plain JavaScript object too.
 - You can override your dependencies for organizing modules architecture, or unit testing without hack standard Node.JS require mechanism.
-- You can use TypeScript or JavaScript, with decorators or not. Different syntaxes for one mechanism. You can use the constructor to provide dependencies or not, as you wish.
+- You can use TypeScript or JavaScript, with decorators.
 - You can create isolate context for multiple instances of your application (Dependency Injection scopes) with a different set of dependencies, overrides, and instances.
 
 ## Install
