@@ -7,28 +7,27 @@ sidebar_label: Overrides
 If you use modules architecture of your application you can override your dependencies.
 
 ```typescript
-import { override, inject } from "node-provide";
+import { override, provide } from "node-provide";
+
+class BaseA {
+  log() {
+    throw new Error("log is not implemented");
+  }
+}
 
 class A {
-  send() {
-    console.log("Hello A!");
+  log() {
+    console.log("Log A!");
   }
 }
 
-@inject
 class B {
-  constructor(private a: A) {
-    // After `override(A, A2)` property `this.a` will be an instance of A2, but not A
-    this.a.send();
+  @provide a: BaseA;
+  log() {
+    this.a.log(); // Log A!
   }
 }
 
-class A2 {
-  send() {
-    console.log("Hello A2!");
-  }
-}
-
-override(A, A2); // After that A and A2 dependencies will use only one instance of A2
-new B(); // "Hello A2!"
+override(BaseA, A); // After that BaseA and A dependencies will use only one instance of A
+new B().log(); // "Log A!"
 ```

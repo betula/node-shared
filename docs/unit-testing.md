@@ -15,12 +15,13 @@ export class World {
 }
 
 // hello.ts
-import { inject } from "node-provide";
+import { provide } from "node-provide";
 import { World } from "./world";
 
-@inject
 export class Hello {
-  constructor(world: World) {
+  @provide world: World;
+
+  world() {
     this.world.hello();
   }
 }
@@ -38,7 +39,7 @@ it("It works!", () => {
     hello: jest.fn(),
   }
   assign(World, worldMock);
-  new Hello();
+  new Hello().world();
   expect(worldMock.hello).toBeCalled();
 })
 ```

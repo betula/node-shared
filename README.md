@@ -23,7 +23,7 @@ npm install node-provide
 TypeScript with decorators and reflect metadata.
 
 ```typescript
-import { provide, inject } from "node-provide";
+import { provide } from "node-provide";
 // ...
 
 class Db { /* ... */ }
@@ -48,7 +48,7 @@ new App().start(); // You can create an instance directly as usually class
 JavaScript with decorators.
 
 ```javascript
-import { provide, inject } from "node-provide";
+import { provide } from "node-provide";
 // ...
 
 // Using @provide decorator
@@ -71,30 +71,29 @@ new App().start(); // You can create an instance directly as usually class
 If you use modules architecture of your application you can override your dependencies.
 
 ```typescript
-import { override, inject } from "node-provide";
+import { override, provide } from "node-provide";
+
+class BaseA {
+  log() {
+    throw new Error("log is not implemented");
+  }
+}
 
 class A {
-  send() {
-    console.log("Hello A!");
+  log() {
+    console.log("Log A!");
   }
 }
 
-@inject
 class B {
-  constructor(private a: A) {
-    // After `override(A, A2)` property `this.a` will be an instance of A2, but not A
-    this.a.send();
+  @provide a: BaseA;
+  log() {
+    this.a.log(); // Log A!
   }
 }
 
-class A2 {
-  send() {
-    console.log("Hello A2!");
-  }
-}
-
-override(A, A2); // After that A and A2 dependencies will use only one instance of A2
-new B(); // "Hello A2!"
+override(BaseA, A); // After that BaseA and A dependencies will use only one instance of A
+new B().log(); // "Log A!"
 ```
 
 ## Unit testing
@@ -110,12 +109,13 @@ export class World {
 }
 
 // hello.ts
-import { inject } from "node-provide";
+import { provide } from "node-provide";
 import { World } from "./world";
 
-@inject
 export class Hello {
-  constructor(world: World) {
+  @provide world: World;
+
+  world() {
     this.world.hello();
   }
 }
@@ -133,7 +133,7 @@ it("It works!", () => {
     hello: jest.fn(),
   }
   assign(World, worldMock);
-  new Hello();
+  new Hello().world();
   expect(worldMock.hello).toBeCalled();
 })
 ```
@@ -160,7 +160,7 @@ after(cleanup);
 
 ## Isolate Dependency Injection context
 
-If you want more then one instance of your application with different configuration or with a different overrides of dependencies, you can use `zone`. It works using async context for separate Dependency Injection scopes. Node.JS async hook will be created only once after the first call of `zone`.
+If you want more then one instance of your application with different configuration or with a different overrides of dependencies, you can use `zone`. It works using async context for separate Dependency Injection scopes. Node.JS async hook will be created only once after the first call of `zone`. In each of `zone` section, you can define any overrides, scopes can be nested with inherit overrides.
 
 ```typescript
 import { zone, provide, resolve } from "node-provide";
@@ -193,45 +193,6 @@ await zone(() => {
   const b = new B;
   b.incAndPrint(); // Counter 1
 });
-```
-
-In each of `zone` section, you can define any overrides, scopes can be nested with inherit overrides.
-
-```javascript
-// config.json
-{
-  "text": "Hello!"
-}
-
-// config2.json
-{
-  "text": "Hello 2!"
-}
-
-// hello.js
-const attach = require("node-provide").attach;
-const config = require("./config");
-
-class Hello {
-  constructor() {
-    attach(this, { config });
-  }
-  echo() {
-    console.log(this.config.text);
-  }
-}
-
-// index.js
-const { zone, override } = require("node-provide");
-// ...
-
-(async () => {
-  await zone(() => {
-    override(config, config2); // Override `config` dependency to `config2` only for this scope
-    new Hello().echo(); // "Hello 2!";
-  })
-  new Hello().echo(); // "Hello!"
-})();
 ```
 
 ## API Reference

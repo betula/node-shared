@@ -5,5 +5,5 @@ sidebar_label: Install
 ---
 
 ```bash
-npm install node-provide
+npm i node-provide
 ```
