@@ -16,7 +16,6 @@ tsconfig.json
 jest.config.js
 
 index.test.ts
-index.ts
 
 examples
 docs
