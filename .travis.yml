@@ -18,24 +18,25 @@ script:
 - npm run test-with-coveralls
 jobs:
   include:
-    - stage: documentation
-      node_js: 12
-      script:
-      - git config --global user.name "${GH_NAME}"
-      - git config --global user.email "${GH_EMAIL}"
-      - echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
-      - cd website && yarn install && GIT_USER="${GH_NAME}" yarn run publish-gh-pages
-    - stage: npm release
-      node_js: 12
-      script: skip
-      deploy:
-        provider: npm
-        email: mail@betula.co
-        api_key:
-          secure: Ch4JtcuR/rVs9Om3oIQwQDf/Myh6T3ao3thXukxsfrUm4xQD88zqrMkK5lV5SxBEIlpc9iZqczgt1g6vvrbjcSI33/LBrL8MA8dL9vaTg+3mCMrglCnWiBNnh89oThuuQOxGAi3tv8Ubf5SxDvAUWF5wn13mgzeCfS156XvWlKsgte9WbnSFnVS0nfXBcYqVowddqNzh78N5ZA+6NLnjUowqABruQrKKL9n7zaiAt1ap+DaocVfZtJESs4mQkcfOv/RanMB8tdwN19gI80rHapu5RQEEreKwN+9cz6Ov+mNA7d7W+7EKpcCCyiMw2gGWf8wiR8Wqiz2KawNaQBvPp5x/5fVk197NIKE20PWcC79qH/39vkdVhO3TuEzVvmO/2q071YtATW75ClKwgdFL+jeRshiE/9KNGW35Ru6kwT+MHwpp8zMjK06+bmckNg3BDC22eyres8MvsbTqk2HxWOrJL3+uA2qqWVdHo/sswAV0D8wQ3trqRGNZkBj13/FjhVHO0/bqHov8XPnSe08Ep02TEHQcKK+sKNv/PNZqlXq+gpgrnA5194banbTRd3xb764RcGkwqc6H97THMnIzMRrLefzKQ14Hl76y9w8TBE7UNIXWfzezTm+UGIOCeHpMPGA+4Vm0RC1isMFPG6N4PqxCiP17Y1JpcVSNvf5cj6M=
-        on:
-          branch: master
-        skip_cleanup: true
+  - stage: documentation
+    node_js: 12
+    script:
+    - git config --global user.name "${GH_NAME}"
+    - git config --global user.email "${GH_EMAIL}"
+    - echo "machine github.com login ${GH_NAME} password ${GH_TOKEN}" > ~/.netrc
+    - cd website && yarn install && GIT_USER="${GH_NAME}" yarn run publish-gh-pages
+  - stage: npm release
+    node_js: 12
+    script: skip
+    deploy:
+      provider: npm
+      email: mail@betula.co
+      api_key:
+        secure: jMQcZSsLFsmTg6kqZfw6O0gadPJxe2X4bEm1QYpbBe4d9+r23j53CUkD+D1CrEAsqxcTR30Yzfv85a1viuUXGkL9JW6imFRyJpX2877w2Pf1s1nMz0EpzDuvc0TNezRkpl9gCT8NtrTYkA5pqPDg1qgSU6Sml4lrdoeqm8tL26bxhbHQkjuNazIPJ+ryLDrSui4pOmdmAGQl1UQ4XRlZKECtyJ0StNPhtL/VrQ+XBv5HOMeTzMZnoDirrEaR91PSUJ6NZZkW5UamjSJNhYeXLcDoN5j/IuacVhglhq0Q7QNqBw1vopfWPfwZBC7RAd38C0ztfN/fblQ7tPcO12z8YUIp3QKD+/YfyRU+si8DN8OMA8ho8k6z+/6nK3o3nGHNt6jq272bXeExvoDUeWMDf//PL76u+xhol+Jsu6wwh3ic2MWuzZwCIjrFrDB2STlWtSrRbMVLu4RfnUUm6ZOHDT3rqz1h4ZWCtTEAajb62mjrbwBhiMN0WVvCgk/JpiOn4CFIXtG5lrhwhlLW/Dx7L4p2MQ8p9tTThGi1U+PKS2X5IKwUo3cXzQs9AlngtddzqmPVmac0YbdtnOOaTcnC0hCcb8HL8u6zyWulxkvp6c/p+UGot9vKQz+azsz19Rj3zTihuYDT4wLXnb/Kq/rGAGaCrAjkXtn1NnNNFuoM4+8=
+      on:
+        repo: betula/node-provide
+        branch: master
+      skip_cleanup: true
 notifications:
   email:
     recipients:
