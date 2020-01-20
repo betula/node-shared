@@ -1,5 +1,6 @@
 sudo: false
 language: node_js
+version: 1.0
 node_js:
 - 8
 - 10
@@ -35,6 +36,7 @@ jobs:
       on:
         branch: master
       skip_cleanup: true
+      edge: true
 notifications:
   email:
     recipients:
