@@ -31,10 +31,8 @@ jobs:
     deploy:
       provider: npm
       email: mail@betula.co
-      api_key:
-        secure: jMQcZSsLFsmTg6kqZfw6O0gadPJxe2X4bEm1QYpbBe4d9+r23j53CUkD+D1CrEAsqxcTR30Yzfv85a1viuUXGkL9JW6imFRyJpX2877w2Pf1s1nMz0EpzDuvc0TNezRkpl9gCT8NtrTYkA5pqPDg1qgSU6Sml4lrdoeqm8tL26bxhbHQkjuNazIPJ+ryLDrSui4pOmdmAGQl1UQ4XRlZKECtyJ0StNPhtL/VrQ+XBv5HOMeTzMZnoDirrEaR91PSUJ6NZZkW5UamjSJNhYeXLcDoN5j/IuacVhglhq0Q7QNqBw1vopfWPfwZBC7RAd38C0ztfN/fblQ7tPcO12z8YUIp3QKD+/YfyRU+si8DN8OMA8ho8k6z+/6nK3o3nGHNt6jq272bXeExvoDUeWMDf//PL76u+xhol+Jsu6wwh3ic2MWuzZwCIjrFrDB2STlWtSrRbMVLu4RfnUUm6ZOHDT3rqz1h4ZWCtTEAajb62mjrbwBhiMN0WVvCgk/JpiOn4CFIXtG5lrhwhlLW/Dx7L4p2MQ8p9tTThGi1U+PKS2X5IKwUo3cXzQs9AlngtddzqmPVmac0YbdtnOOaTcnC0hCcb8HL8u6zyWulxkvp6c/p+UGot9vKQz+azsz19Rj3zTihuYDT4wLXnb/Kq/rGAGaCrAjkXtn1NnNNFuoM4+8=
+      api_key: "$NPM_TOKEN"
       on:
-        repo: betula/node-provide
         branch: master
       skip_cleanup: true
 notifications:
