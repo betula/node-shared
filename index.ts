@@ -54,7 +54,7 @@ export function zone<T = void>(callback: () => T): Promise<void> {
         reject(error);
       }
       delete zoneParentIndex[asyncId];
-      cleanupZone(asyncId);
+      resetZone(asyncId);
     });
   });
 }
@@ -129,7 +129,7 @@ export function reset() {
   });
 }
 
-export function cleanupZone(zoneId: number) {
+function resetZone(zoneId: number) {
   if (instances[zoneId]) {
     instances[zoneId].clear();
     delete instances[zoneId];
@@ -137,6 +137,10 @@ export function cleanupZone(zoneId: number) {
   if (resolvePhases[zoneId]) {
     resolvePhases[zoneId].clear();
     delete resolvePhases[zoneId];
+  }
+  if (overrides[zoneId]) {
+    overrides[zoneId].clear();
+    delete overrides[zoneId];
   }
 }
 
