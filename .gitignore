@@ -2,15 +2,21 @@
 *.swp
 .DS_Store
 tmp/
-npm-debug.log
-yarn-error.log
+
 .vscode/
 .idea/
-node_modules/
-.dist/
-coverage/
+
+npm-debug.log
+yarn-error.log
 /package-lock.json
 /yarn.lock
+examples/*/package-lock.json
+examples/*/yarn.lock
+
+node_modules/
+
+release/
+coverage/
 
 # Docusaurus
 
@@ -23,6 +29,3 @@ website/yarn.lock
 website/package-lock.json
 website/node_modules
 website/i18n/*
-
-examples/*/package-lock.json
-examples/*/yarn.lock

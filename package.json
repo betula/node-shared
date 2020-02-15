@@ -1,19 +1,28 @@
 {
   "name": "node-provide",
-  "version": "0.4.4",
+  "version": "1.0.0",
   "description": "Async context based Dependency Injection for Node.JS",
   "repository": {
     "url": "https://github.com/betula/node-provide"
   },
   "source": "./index.ts",
-  "main": ".dist/index.js",
-  "types": ".dist/index.d.ts",
+  "main": "./release/index.js",
+  "types": "./release/index.d.ts",
+  "files": [
+    "/release",
+    "/index.ts",
+    "/jest-cleanup-after-each.js",
+    "/README.md"
+  ],
+  "engines" : {
+    "node" : ">=8.0.0"
+  },
   "scripts": {
     "build": "npx tsc",
     "test": "npx jest --coverage",
     "test-with-coveralls": "npx jest --coverage && cat ./coverage/lcov.info | coveralls",
-    "tslint": "tslint -c tslint.json -p tsconfig.json",
-    "prepare": "npm run tslint && npm run build && npm run test"
+    "eslint": "npx eslint index.ts",
+    "prepare": "npm run eslint && npm run build && npm run test"
   },
   "keywords": [
     "di",
@@ -31,13 +40,14 @@
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
-    "@types/node": "^12.12.17",
-    "typescript": "^3.7.3",
-    "tslint": "^5.20.1",
-    "tslint-config-airbnb": "^5.11.2",
-    "jest": "^24.9.0",
-    "ts-jest": "^24.2.0",
-    "@types/jest": "^24.0.23",
-    "coveralls": "^3.0.9"
+    "@types/jest": "^25.1.2",
+    "@types/node": "^13.7.1",
+    "@typescript-eslint/eslint-plugin": "^2.19.2",
+    "@typescript-eslint/parser": "^2.19.2",
+    "coveralls": "^3.0.9",
+    "eslint": "^6.8.0",
+    "jest": "^25.1.0",
+    "ts-jest": "^25.2.0",
+    "typescript": "^3.7.5"
   }
 }

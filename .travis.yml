@@ -14,7 +14,7 @@ cache:
 install:
 - npm install
 script:
-- npm run tslint
+- npm run eslint
 - npm run build
 - npm run test-with-coveralls
 jobs:

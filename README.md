@@ -293,6 +293,13 @@ Clean all cached dependency instances and overrides. Has no parameters.
 reset()
 ```
 
+**factory**
+
+Make new DI.
+
+```javascript
+const { provide, assign, override, cleanup, reset } = factory();
+```
 ---
 
 If you have questions or something else for me or this project, maybe architectures questions, improvement ideas or anything else, please make the issue.
