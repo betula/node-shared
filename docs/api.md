@@ -88,7 +88,7 @@ Clean all cached dependency instances. It's needed for testing. Has no parameter
 
 ```javascript
 // ...
-after(cleanup);
+afterEach(cleanup);
 // ...
 ```
 

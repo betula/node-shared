@@ -32,9 +32,9 @@ import { World } from "./world";
 import { Hello } from "./hello";
 // ...
 
-after(cleanup);
+afterEach(cleanup);
 
-it("It works!", () => {
+test("It works!", () => {
   const worldMock = {
     hello: jest.fn(),
   }
@@ -60,6 +60,6 @@ This code means that after each test cached dependency instances will be clear. 
 ```javascript
 const { cleanup } = require("node-provide");
 // ...
-after(cleanup);
+afterEach(cleanup);
 // ...
 ```
