@@ -3,5 +3,7 @@ module.exports = {
     ["@babel/preset-env", {targets: {node: "current"}}],
     "@babel/preset-typescript",
   ],
-  plugins: []
+  plugins: [
+    [ "@babel/plugin-proposal-class-properties", { "loose": true } ]
+  ]
 };
