@@ -9,20 +9,18 @@ Async context based Dependency Injection for Node.JS without pain with Dependenc
 - You can use it at any place of your application without rewrite your applications architecture or other preparations or initializations.
 - Each dependency can be class, function, or any another value, and plain JavaScript object too.
 - You can override your dependencies for organizing modules architecture, or unit testing without hack standard Node.JS require mechanism.
-- You can use TypeScript or JavaScript, with decorators.
+- You can use TypeScript or JavaScript.
 - You can create isolate context for multiple instances of your application (Dependency Injection scopes) with a different set of dependencies, overrides, and instances.
 
 ## Install
 
 ```
-npm install node-provide
+npm i node-provide
 ```
 
-## Some examples of different syntax in JavaScript and TypeScript
+## Example
 
-TypeScript with decorators and reflect metadata.
-
-```typescript
+```javascript
 import { provide } from "node-provide";
 // ...
 
@@ -30,10 +28,10 @@ class Db { /* ... */ }
 class Server { /* ... */ }
 // ...
 
-// Inject dependencies using @provide decorator and class properties
+// Inject dependencies using a provide function and class properties
 export default class App {
-  @provide db: Db;
-  @provide server: Server;
+  db = provide(Db);
+  server = provide(Server);
   // ...
   start() {
     this.db.init();
@@ -45,32 +43,11 @@ export default class App {
 new App().start(); // You can create an instance directly as usually class
 ```
 
-JavaScript with decorators.
-
-```javascript
-import { provide } from "node-provide";
-// ...
-
-// Using @provide decorator
-export default class App {
-  @provide(Db) db;
-  @provide(Server) server;
-  // ...
-  start() {
-    this.db.init();
-    // ...
-  }
-}
-
-// index.js
-new App().start(); // You can create an instance directly as usually class
-```
-
 ## Override dependencies
 
 If you use modules architecture of your application you can override your dependencies.
 
-```typescript
+```javascript
 import { override, provide } from "node-provide";
 
 class BaseA {
@@ -86,7 +63,7 @@ class A {
 }
 
 class B {
-  @provide a: BaseA;
+  a = provide(BaseA);
   log() {
     this.a.log(); // Log A!
   }
@@ -100,7 +77,7 @@ new B().log(); // "Log A!"
 
 You can use `assign` to provide mocks into your dependencies.
 
-```typescript
+```javascript
 // world.ts
 export class World {
   hello() {
@@ -113,7 +90,7 @@ import { provide } from "node-provide";
 import { World } from "./world";
 
 export class Hello {
-  @provide world: World;
+  world = provide(World);
 
   world() {
     this.world.hello();
@@ -162,8 +139,8 @@ afterEach(cleanup);
 
 If you want more then one instance of your application with different configuration or with a different overrides of dependencies, you can use `zone`. It works using async context for separate Dependency Injection scopes. Node.JS async hook will be created only once after the first call of `zone`. In each of `zone` section, you can define any overrides, scopes can be nested with inherit overrides.
 
-```typescript
-import { zone, provide, resolve } from "node-provide";
+```javascript
+import { zone, provide } from "node-provide";
 
 class A {
   private counter: number = 0;
@@ -176,7 +153,7 @@ class A {
 }
 
 class B {
-  @provide a: A
+  a = provide(A);
   incAndPrint() {
     a.inc();
     a.print();
@@ -210,20 +187,12 @@ const depInstance = resolve(Dep);
 
 **provide**
 
-Property decorator for providing an instance of dependency on the class property had two overridden signatures. One of them without parameter used reflect metadata for taking dependency, next one uses dependency from parameter.
+The function for providing an instance of dependency on the class property.
 
-```typescript
+```javascript
 class {
-  @provide dep1: Dep1;
-  @provide(Dep2): dep2;
-}
-```
-
-In TypeScript exists the problem that it doesn't understand that property from non initialized has been transformed to getter. You can disable `strictPropertyInitialization` in your `tsconfig.json` or using with an exclamation mark.
-
-```typescript
-class {
-  @provide dep1!: Dep1;
+  dep1 = provide(Dep1);
+  dep2 = provide(Dep2);
 }
 ```
 

@@ -19,7 +19,7 @@ import { provide } from "node-provide";
 import { World } from "./world";
 
 export class Hello {
-  @provide world: World;
+  world = provide(World);
 
   world() {
     this.world.hello();

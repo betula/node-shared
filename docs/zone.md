@@ -20,7 +20,7 @@ class A {
 }
 
 class B {
-  @provide a: A
+  a = provide(A);
   incAndPrint() {
     a.inc();
     a.print();

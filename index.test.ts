@@ -21,10 +21,10 @@ test("Should be only one instance of provided class", () => {
     value = "value";
   }
   class B {
-    @provide a: A;
+    a = provide(A);
   }
   class C {
-    @provide a: A;
+    a = provide(A);
   }
   const b = new B();
   const c = new C();
@@ -33,23 +33,10 @@ test("Should be only one instance of provided class", () => {
   expect(instances[RootZoneId].size).toBe(1);
 });
 
-test("Should make instance of class only on demand", () => {
-  class A {
-    method() {}
-  }
-  class B {
-    @provide a: A;
-  }
-  const b = new B();
-  expect(instances[RootZoneId]).toBeUndefined();
-  expect(typeof b.a.method).toBe("function");
-  expect(instances[RootZoneId].size).toBe(1);
-});
-
 test("Should cache getter after first use", () => {
   class A {}
   class B {
-    @provide a: A;
+    a = provide(A);
   }
   const b = new B();
   const a = b.a;
@@ -63,8 +50,8 @@ test("Should work resolve function", () => {
   class A {}
   class B {}
   class C {
-    @provide a: A;
-    @provide b: B;
+    a = provide(A);
+    b = provide(B);
   }
   const c = new C();
   expect(resolve(A)).toBe(c.a);
@@ -77,7 +64,7 @@ test("Should work with override", () => {
   class A {}
   class A2 extends A {}
   class B {
-    @provide a: A;
+    a = provide(A);
   }
   override(A, A2);
   expect(overrides[RootZoneId].size).toBe(1);
@@ -89,7 +76,7 @@ test("Should cache override", () => {
   class A2 extends A {}
   class A3 extends A2 {}
   class B {
-    @provide a: A;
+    a = provide(A);
   }
   override(A, A2);
   override(A2, A3);
@@ -126,7 +113,7 @@ test("Should work reset", () => {
 test("Should work with JS semantic", () => {
   class A {}
   class B {
-    @provide(A) a: A;
+    a = provide(A);
   }
   expect(resolve(B).a).toBeInstanceOf(A);
 });
@@ -144,8 +131,6 @@ test("should work resolve with plain values", () => {
 test("Should work assign", () => {
   class A {}
   class B {}
-  class C {}
-  class D {}
   class E {}
   const j = {};
   override(A, B);
@@ -187,7 +172,7 @@ test("Should work zone with local override", async () => {
   const spyF = jest.fn().mockReturnValueOnce(1).mockReturnValueOnce(2);
   const F = () => spyF();
   class A {
-    @provide(F) f: number;
+    f = provide(F) as number;
     getF() {
       return this.f;
     }
@@ -245,7 +230,7 @@ test("Should destroy async context in zone", async () => {
 
 test("Should throw error when circular dependency detected", () => {
   class A {
-    @provide(func) f: A;
+    f = provide(func);
     action() {}
     constructor() {
       this.f.action();

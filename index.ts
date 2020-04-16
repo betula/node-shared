@@ -1,7 +1,5 @@
 import async_hooks, { AsyncHook } from "async_hooks";
-import "reflect-metadata";
 
-type PropertyKey = string | symbol;
 type ObjectMap<T = any> = {
   [key: string]: T;
 };
@@ -59,21 +57,6 @@ export function factory() {
         resetZone(asyncId);
       });
     });
-  }
-
-  function provide(target: object, propertyKey: PropertyKey): any;
-  function provide(dep: Dep): (target: object, propertyKey: PropertyKey) => any;
-  function provide(targetOrDep: any, propertyKey?: any): any {
-    if (typeof propertyKey === "undefined") {
-      const dep: Dep = targetOrDep;
-      return (_target: object, propertyKey: PropertyKey): any => (
-        createProvideDescriptor(dep, propertyKey)
-      );
-    }
-    return createProvideDescriptor(
-      Reflect.getMetadata("design:type", targetOrDep, propertyKey),
-      propertyKey,
-    );
   }
 
   function resolve<T>(dep: Dep<T>): T {
@@ -144,23 +127,6 @@ export function factory() {
     }
   }
 
-  function createProvideDescriptor(dep: Dep, propertyKey: PropertyKey) {
-    return {
-      get() {
-        const instance = resolve(dep);
-        Object.defineProperty(this, propertyKey, {
-          value: instance,
-          enumerable: true,
-          configurable: false,
-          writable: false,
-        });
-        return instance;
-      },
-      enumerable: true,
-      configurable: true,
-    };
-  }
-
   function setResolvePhase(dep: Dep, phase: DepResolvePhase) {
     if (typeof resolvePhases[zoneId] === "undefined") {
       resolvePhases[zoneId] = new Map();
@@ -218,7 +184,7 @@ export function factory() {
     zoneIndex,
     zoneParentIndex,
     zone,
-    provide,
+    provide: resolve,
     resolve,
     override,
     assign,

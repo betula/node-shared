@@ -22,7 +22,7 @@ class A {
 }
 
 class B {
-  @provide a: BaseA;
+  a = provide(BaseA);
   log() {
     this.a.log(); // Log A!
   }

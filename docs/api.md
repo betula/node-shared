@@ -17,20 +17,12 @@ const depInstance = resolve(Dep);
 
 ## provide
 
-Property decorator for providing an instance of dependency on the class property had two overridden signatures. One of them without parameter used reflect metadata for taking dependency, next one uses dependency from parameter.
+The function for providing an instance of dependency on the class property.
 
-```typescript
+```javascript
 class {
-  @provide dep1: Dep1;
-  @provide(Dep2): dep2;
-}
-```
-
-In TypeScript exists the problem that it doesn't understand that property from non initialized has been transformed to getter. You can disable `strictPropertyInitialization` in your `tsconfig.json` or using with an exclamation mark.
-
-```typescript
-class {
-  @provide dep1!: Dep1;
+  dep1 = provide(Dep1);
+  dep2 = provide(Dep2);
 }
 ```
 
