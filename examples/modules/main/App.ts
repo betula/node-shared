@@ -2,7 +2,7 @@ import { provide } from "node-provide";
 import { Hello } from "@modules/common";
 
 export class App {
-  @provide hello: Hello;
+  hello = provide(Hello);
 
   public start() {
     this.hello.world();

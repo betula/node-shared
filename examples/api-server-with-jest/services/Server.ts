@@ -6,11 +6,11 @@ import { Logger } from "@services/Logger";
 export type RequestHandler = (req: Express.Request, res: Express.Response) => Promise<any>;
 
 export class Server {
-  @provide logger: Logger;
+  logger = provide(Logger);
 
   public express: Express.Express;
-  public port: number;
-  public hostname: string;
+  public port!: number;
+  public hostname!: string;
 
   constructor() {
     this.express = Express();
