@@ -1,7 +1,6 @@
 ![node-provide](https://betula.github.io/node-provide/img/readme-logo.svg)
 
 [![npm version](https://badge.fury.io/js/node-provide.svg)](https://badge.fury.io/js/node-provide)
-[![Build Status](https://travis-ci.org/betula/node-provide.svg?branch=master)](https://travis-ci.org/betula/node-provide)
 [![Coverage Status](https://coveralls.io/repos/github/betula/node-provide/badge.svg?branch=master)](https://coveralls.io/github/betula/node-provide?branch=master)
 
 Async context based Dependency Injection for Node.JS without pain with Dependency Injection Container, dependency registration, and configuration.
