@@ -1,7 +1,7 @@
 {
-  "name": "node-provide",
+  "name": "node-shared",
   "version": "2.0.1",
-  "description": "Async context based Dependency Injection for Node.JS",
+  "description": "Shared logic for Node.JS",
   "repository": {
     "url": "https://github.com/betula/node-provide"
   },
@@ -31,10 +31,12 @@
     "provide",
     "injection",
     "inject",
-    "zone",
+    "shared",
+    "shared logic",
+    "isolate",
     "node"
   ],
-  "author": "Viacheslav Bereza <mail@betula.co>",
+  "author": "Slava Birch <mail@betula.co>",
   "license": "MIT",
   "devDependencies": {
     "@babel/preset-env": "^7.9.5",
