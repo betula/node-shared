@@ -1,274 +1,111 @@
-![node-provide](https://betula.github.io/node-provide/img/readme-logo.svg)
+# node-shared
 
-[![npm version](https://badge.fury.io/js/node-provide.svg)](https://badge.fury.io/js/node-provide)
-[![Build Status](https://travis-ci.org/betula/node-provide.svg?branch=master)](https://travis-ci.org/betula/node-provide)
-[![Coverage Status](https://coveralls.io/repos/github/betula/node-provide/badge.svg?branch=master)](https://coveralls.io/github/betula/node-provide?branch=master)
+[![npm version](https://img.shields.io/npm/v/node-shared?style=flat-square)](https://www.npmjs.com/package/node-shared) [![npm bundle size](https://img.shields.io/bundlephobia/minzip/node-shared?style=flat-square)](https://bundlephobia.com/result?p=node-shared) [![typescript supported](https://img.shields.io/npm/types/typescript?style=flat-square)](./src/index.ts)
 
-Async context based Dependency Injection for Node.JS without pain with Dependency Injection Container, dependency registration, and configuration.
+Service provider for Node.JS without pain with Dependency Injection Container, dependency registration, and configuration.
 
 - You can use it at any place of your application without rewrite your applications architecture or other preparations or initializations.
-- Each dependency can be class, function, or any another value, and plain JavaScript object too.
-- You can override your dependencies for organizing modules architecture, or unit testing without hack standard Node.JS require mechanism.
+- Each dependency can be class or function.
+- You can override your dependencies for unit testing without hack standard Node.JS require mechanism.
 - You can use TypeScript or JavaScript.
-- You can create isolate context for multiple instances of your application (Dependency Injection scopes) with a different set of dependencies, overrides, and instances.
-
-## Install
-
-```
-npm i node-provide
-```
 
 ## Example
 
 ```javascript
-import { provide } from "node-provide";
-// ...
+import { shared } from "node-shared";
 
-class Db { /* ... */ }
-class Server { /* ... */ }
-// ...
-
-// Inject dependencies using a provide function and class properties
-export default class App {
-  db = provide(Db);
-  server = provide(Server);
-  // ...
-  start() {
-    this.db.init();
-    // ...
+// It is can be service or shared state or cross requests data
+class Users {
+  async getById(id) {
+    ...
   }
 }
 
-// index.ts
-new App().start(); // You can create an instance directly as usually class
-```
+const sharedUsers = () => shared(Users);
 
-## Override dependencies
-
-If you use modules architecture of your application you can override your dependencies.
-
-```javascript
-import { override, provide } from "node-provide";
-
-class BaseA {
-  log() {
-    throw new Error("log is not implemented");
-  }
-}
-
-class A {
-  log() {
-    console.log("Log A!");
-  }
-}
-
-class B {
-  a = provide(BaseA);
-  log() {
-    this.a.log(); // Log A!
-  }
-}
-
-override(BaseA, A); // After that BaseA and A dependencies will use only one instance of A
-new B().log(); // "Log A!"
+// And with express for example
+app.get("/user/:id", async (req, res) => {
+  const users = sharedUsers();
+  res.json(await users.getById(req.params.id));
+});
 ```
 
 ## Unit testing
 
-You can use `assign` to provide mocks into your dependencies.
+You can use `mock` to provide mocks into your dependencies.
 
 ```javascript
-// world.ts
-export class World {
-  hello() {
-    // ...
-  }
-}
+import { mock } from "node-shared";
+import { Users, Api } from "./shareds";
 
-// hello.ts
-import { provide } from "node-provide";
-import { World } from "./world";
+test("Users service should call api service inside", async () => {
+  const apiMock = mock(Api, {
+    getUserById: jest.fn();
+  });
 
-export class Hello {
-  world = provide(World);
+  const users = new Users();
 
-  world() {
-    this.world.hello();
-  }
-}
-
-// hello.test.ts
-import { assign, cleanup } from "node-provide";
-import { World } from "./world";
-import { Hello } from "./hello";
-// ...
-
-afterEach(cleanup);
-
-test("It works!", () => {
-  const worldMock = {
-    hello: jest.fn(),
-  }
-  assign(World, worldMock);
-  new Hello().world();
-  expect(worldMock.hello).toBeCalled();
-})
+  await users.getById("John");
+  expect(apiMock.getUserById).toHaveBeenCalledWith("John");
+});
 ```
 
-If you use `Jest` for unit testing you need to add some code to your `jest.config.js` file.
+If you use Jest for unit testing you need to add some code to your `jest.config.json` file.
 
 ```javascript
-// jest.config.js
+// jest.config.json
 {
-  // ...
-  setupFilesAfterEnv: [ "node-provide/jest-cleanup-after-each" ],
-  // ...
+  ...
+  setupFilesAfterEnv: [
+    "node-shared/jest"
+  ],
+  ...
 }
 ```
 
-This code means that after each test cached dependency instances will be clear. For another testing frameworks, you need call `cleanup` after each test case manually for cleanup cached instances of dependencies.
+This code means that after each test cached shareds instances will be clear. For another testing frameworks, you need call `free` after each test case manually for cleanup cached instances of dependencies.
 
 ```javascript
-const { cleanup } = require("node-provide");
-// ...
-afterEach(cleanup);
-// ...
-```
-
-## Isolate Dependency Injection context
-
-If you want more then one instance of your application with different configuration or with a different overrides of dependencies, you can use `zone`. It works using async context for separate Dependency Injection scopes. Node.JS async hook will be created only once after the first call of `zone`. In each of `zone` section, you can define any overrides, scopes can be nested with inherit overrides.
-
-```javascript
-import { zone, provide } from "node-provide";
-
-class A {
-  private counter: number = 0;
-  inc() {
-    this.counter += 1;
-  }
-  print() {
-    console.log(`Counter ${this.counter}`);
-  }
-}
-
-class B {
-  a = provide(A);
-  incAndPrint() {
-    a.inc();
-    a.print();
-  }
-}
-
-// Each section of `zone` use different dependency injection scopes and different instances of your dependencies
-await zone(() => {
-  const b = new B;
-  b.incAndPrint(); // Counter 1
-  b.incAndPrint(); // Counter 2
-});
-await zone(() => {
-  const b = new B;
-  b.incAndPrint(); // Counter 1
-});
+afterEach(require("node-shared").free);
 ```
 
 ## API Reference
 
-**resolve**
+**shared**
 
-Returns instance of your dependency. Each dependency can be class, function or any value.
+Returns instance of your dependency. Each dependency can be class or function.
 - For class. The class will be instantiated once and cached
 - For function. The function will be called and result cached
-- For any value. Return it value without any changes
 
 ```javascript
-const depInstance = resolve(Dep);
+const db = shared(Db);
 ```
 
-**provide**
+**mock**
 
-The function for providing an instance of dependency on the class property.
-
-```javascript
-class {
-  dep1 = provide(Dep1);
-  dep2 = provide(Dep2);
-}
-```
-
-**override**
-
-Override dependency.
+Define resolved value for any dependency.
 
 ```javascript
-override(FromDep, ToDep);
-// ...
-console.log(resolve(FromDep) === resolve(ToDep)); // true
-```
-
-**assign**
-
-Define any value as resolved value for any dependency.
-
-```javascript
-assign(Dep, value);
-// ...
-class A {}
-assign(A, 10);
-console.log(resolve(A)); // 10
-```
-
-**zone**
-
-Run your app in isolated Dependency Injection scope. All instances cached for this instance application will be isolated from all cached instances in other scopes. All overrides defined here will be inherited for nested isolated scopes but not available for others. No return value.
-
-```javascript
-await zone(async () => {
-  const app = new App(); // Run you app here
-  await app.run();
-  // ...
+const mockedDb = mock(Db, {
+  connect: jest.fn()
 });
+
+shared(Db).connect();
+expect(mockedDb.connect).toHaveBeenCalled();
 ```
+
+**free**
+
+Clean all cached shared instances. It's needed for testing usually. Has no parameters.
 
 ```javascript
-await zone(async () => {
-  override(Dep1, Dep2);
-
-  await zone(async () => {
-    override(Dep2, Dep3);
-    // ...
-    console.log(resolve(Dep1) instanceof Dep3); // true
-  });
-  // ...
-  console.log(resolve(Dep1) instanceof Dep2); // true
-})
+free()
 ```
 
-**cleanup**
+## Install
 
-Clean all cached dependency instances. It's needed for testing. Has no parameters.
-
-```javascript
-// ...
-afterEach(cleanup);
-// ...
+```
+npm i node-shared
 ```
 
-**reset**
-
-Clean all cached dependency instances and overrides. Has no parameters.
-
-```javascript
-reset()
-```
-
-**factory**
-
-Make new DI.
-
-```javascript
-const { provide, assign, override, cleanup, reset } = factory();
-```
----
-
-If you have questions or something else for me or this project, maybe architectures questions, improvement ideas or anything else, please make the issue.
+Enjoy and Happy Coding!

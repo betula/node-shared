@@ -1,18 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "es2015",
     "module": "commonjs",
     "declaration": true,
-    "declarationMap": true,
     "sourceMap": true,
-    "outDir": "./release",
+    "outDir": "./build",
     "strict": true,
     "esModuleInterop": true
   },
-  "exclude": [
-    "release/*",
-    "examples/*",
-    "**/*.js",
-    "**/*.test.ts"
+  "include": [
+    "src"
   ]
 }
