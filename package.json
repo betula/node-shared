@@ -1,6 +1,6 @@
 {
   "name": "node-shared",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Shared logic for Node.JS",
   "repository": {
     "url": "https://github.com/betula/node-shared"
