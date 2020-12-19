@@ -3,7 +3,7 @@
   "version": "3.0.0",
   "description": "Shared logic for Node.JS",
   "repository": {
-    "url": "https://github.com/betula/node-provide"
+    "url": "https://github.com/betula/node-shared"
   },
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
