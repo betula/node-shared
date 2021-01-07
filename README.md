@@ -1,6 +1,6 @@
 # node-shared
 
-[![npm version](https://img.shields.io/npm/v/node-shared?style=flat-square)](https://www.npmjs.com/package/node-shared) [![npm bundle size](https://img.shields.io/bundlephobia/minzip/node-shared?style=flat-square)](https://bundlephobia.com/result?p=node-shared) [![typescript supported](https://img.shields.io/npm/types/typescript?style=flat-square)](./src/index.ts) [![npm downloads](https://img.shields.io/npm/dt/node-shared?style=flat-square)](https://www.npmjs.com/package/node-shared)
+[![npm version](https://img.shields.io/npm/v/node-shared?style=flat-square)](https://www.npmjs.com/package/node-shared) [![npm bundle size](https://img.shields.io/bundlephobia/minzip/node-shared?style=flat-square)](https://bundlephobia.com/result?p=node-shared) [![typescript supported](https://img.shields.io/npm/types/typescript?style=flat-square)](./src/index.ts)
 
 Service provider for Node.JS without pain with Dependency Injection Container, dependency registration, and configuration.
 
