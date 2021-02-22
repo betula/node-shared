@@ -9,7 +9,7 @@ Service provider for Node.JS without pain with Dependency Injection Container, d
 - You can override your dependencies for unit testing without hack standard Node.JS require mechanism.
 - You can use TypeScript or JavaScript.
 
-## Example
+## Examples
 
 ```javascript
 import { shared } from "node-shared";
@@ -28,6 +28,31 @@ app.get("/user/:id", async (req, res) => {
   const users = sharedUsers();
   res.json(await users.getById(req.params.id));
 });
+```
+
+And
+
+```javascript
+import { shared } from "node-shared";
+// ...
+
+class Db { /* ... */ }
+class Server { /* ... */ }
+// ...
+
+// Inject dependencies using a shared function and class properties
+export default class App {
+  db = shared(Db);
+  server = shared(Server);
+  // ...
+  start() {
+    this.db.init();
+    // ...
+  }
+}
+
+// index.ts
+new App().start(); // You can create an instance directly as usually class
 ```
 
 ## Unit testing
@@ -104,7 +129,7 @@ free()
 
 ## Install
 
-```
+```sh
 npm i node-shared
 ```
 
